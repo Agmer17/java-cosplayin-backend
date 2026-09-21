@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "GOOGLE_CLIENT_ID",
+    "type": "java.lang.String",
+    "description": "CLIENT ID BUAT OAUTH GOOGLE"
+  },
+  {
+    "name": "GOOGLE_CLIENT_SECRET",
+    "type": "java.lang.String",
+    "description": "OAUTH SECRET FOR GOOGLE RESOURCE SERVER"
+  }
+]}
