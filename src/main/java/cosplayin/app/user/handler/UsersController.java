@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,7 @@ public class UsersController {
 
     private final UsersService usersService;
 
-    @GetMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     @RequireAuth
     @RequireRole({ UserRoles.ADMIN })
     public ResponseEntity<SuccessResponse<String>> deleteUsers(@PathVariable UUID id,

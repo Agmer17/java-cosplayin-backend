@@ -3,8 +3,6 @@ package cosplayin.app.core.exception.handler;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -18,6 +16,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import cosplayin.app.core.exception.model.FatalErrorExceptions;
 import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
+import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.RequestValidationException;
 import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.core.exception.model.UnauthorizedAccessExceptions;

@@ -1,9 +1,11 @@
 package cosplayin.app.profiles.service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,9 +13,10 @@ import cosplayin.app.core.authorization.UserStatus;
 import cosplayin.app.core.event.UsersCredentialUpdateEvent;
 import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.RequestValidationException;
+import cosplayin.app.profiles.model.dto.DetailProfileDTO;
+import cosplayin.app.profiles.model.dto.ProfileUpdateDto;
 import cosplayin.app.profiles.model.dto.SubmitOnBoardingRequests;
 import cosplayin.app.profiles.model.entity.Profiles;
-import cosplayin.app.profiles.model.projection.DetailProfileProjection;
 import cosplayin.app.profiles.repository.ProfilesRepository;
 import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.user.model.entity.Users;
@@ -32,6 +35,9 @@ public class ProfilesService {
         private final StorageUtils storageUtils;
         private final ApplicationEventPublisher eventPublisher;
 
+        private final String[] avatarFolder = { "user", "profiles", "avatar" };
+        private final String[] bannerFolder = { "user", "profiles", "banner" };
+
         public Profiles create(String fullname, String avatarUrl, Users user) {
                 Profiles profile = Profiles.builder()
                                 .user(user)
@@ -42,15 +48,22 @@ public class ProfilesService {
                 return profileRepository.save(profile);
         }
 
-        public DetailProfileProjection getProfileDetails(UUID id) {
-                DetailProfileProjection profileDetail = profileRepository.findProfileDetailsById(id)
+        public DetailProfileDTO getProfileDetails(UUID id) {
+                DetailProfileDTO profileDetail = profileRepository.findProfileDetailsById(id)
+                                .orElseThrow(() -> new NotFoundException("profile and users was not found"));
+
+                return profileDetail;
+        }
+
+        public DetailProfileDTO getProfileDetails(String username) {
+                DetailProfileDTO profileDetail = profileRepository.findProfileDetailsByUsername(username)
                                 .orElseThrow(() -> new NotFoundException("profile and users was not found"));
 
                 return profileDetail;
         }
 
         @Transactional
-        public DetailProfileProjection submitOnBoarding(UUID curr, SubmitOnBoardingRequests req) {
+        public DetailProfileDTO submitOnBoarding(UUID curr, SubmitOnBoardingRequests req) {
 
                 if (req.getBannerPicture() == null || req.getBannerPicture().isEmpty()
                                 || req.getProfilePicture() == null
@@ -66,17 +79,15 @@ public class ProfilesService {
 
                 FileValidationPolicy policy = new FileValidationPolicy(Set.of(SupportedFileType.IMAGE), 5242880);
 
-                FileModel avatar = storageUtils.savePublicFile(req.getProfilePicture(), policy, "user", "profiles",
-                                "avatar");
-                FileModel banner = storageUtils.savePublicFile(req.getBannerPicture(), policy, "user", "profiles",
-                                "banner");
+                FileModel avatar = storageUtils.savePublicFile(req.getProfilePicture(), policy, avatarFolder);
+                FileModel banner = storageUtils.savePublicFile(req.getBannerPicture(), policy, bannerFolder);
 
                 profile.setAvatarUrl(avatar.getFilePath());
                 profile.setBannerUrl(banner.getFilePath());
                 userService.updateUsername(req.getUsername(), curr);
                 user.setStatus(UserStatus.ACTIVE);
 
-                DetailProfileProjection projection = profileRepository.findProfileDetailsById(curr)
+                DetailProfileDTO projection = profileRepository.findProfileDetailsById(curr)
                                 .orElseThrow(() -> new NotFoundException("your account was not found!"));
 
                 UsersCredentialUpdateEvent event = new UsersCredentialUpdateEvent(UserCredentials.builder()
@@ -88,5 +99,62 @@ public class ProfilesService {
                 eventPublisher.publishEvent(event);
                 return projection;
 
+        }
+
+        @Transactional
+        public DetailProfileDTO updateProfiles(UUID curr, ProfileUpdateDto updateDto) {
+                Profiles profiles = profileRepository.findById(curr)
+                                .orElseThrow(() -> new NotFoundException("users not found"));
+
+                if (updateDto.getDisplayName() != null) {
+                        profiles.setDisplayName(updateDto.getDisplayName());
+                }
+
+                if (updateDto.getBio() != null) {
+                        profiles.setBio(updateDto.getBio());
+                }
+
+                if (updateDto.getVisibility() != null) {
+                        profiles.setVisibility(updateDto.getVisibility());
+                }
+
+                if (updateDto.getGender() != null) {
+                        profiles.setGender(updateDto.getGender());
+                }
+
+                FileValidationPolicy filePolicy = new FileValidationPolicy(Set.of(SupportedFileType.IMAGE), 5242880);
+                if (updateDto.getAvatar() != null) {
+                        FileModel saved = storageUtils.savePublicFile(updateDto.getAvatar(), filePolicy, avatarFolder);
+                        profiles.setAvatarUrl(saved.getFilePath());
+                }
+
+                if (updateDto.getBanner() != null) {
+                        FileModel saved = storageUtils.savePublicFile(updateDto.getBanner(), filePolicy, bannerFolder);
+                        profiles.setBannerUrl(saved.getFilePath());
+                }
+
+                return DetailProfileDTO.builder()
+                                .id(curr)
+                                .displayName(profiles.getDisplayName())
+                                .bio(profiles.getBio())
+                                .avatarUrl(profiles.getAvatarUrl())
+                                .bannerUrl(profiles.getBannerUrl())
+                                .visibility(profiles.getVisibility())
+                                .username(profiles.getUser().getUsername())
+                                .userStatus(profiles.getUser().getStatus())
+                                .userRole(profiles.getUser().getRole())
+                                .build();
+        }
+
+        public List<DetailProfileDTO> findRandomProfile(UUID curr) {
+                List<DetailProfileDTO> rand = profileRepository.findDiscoverProfiles(curr, PageRequest.of(0, 10));
+
+                return rand;
+        }
+
+        public List<DetailProfileDTO> searchByUsername(String query) {
+                List<DetailProfileDTO> results = profileRepository.searchProfiles(query);
+
+                return results;
         }
 }

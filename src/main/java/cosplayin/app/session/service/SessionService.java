@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import cosplayin.app.core.event.UsersCredentialUpdateEvent;
+import cosplayin.app.core.event.UsersDeletedEvent;
 import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.session.model.SessionAuthContext;
 import cosplayin.app.session.model.SessionDataModel;
@@ -98,10 +99,10 @@ public class SessionService {
     @Async
     @EventListener
     @Retryable(includes = RedisConnectionFailureException.class, maxRetries = 2, delay = 1000, multiplier = 2)
-    public void revokeAllSessionByUser(UUID id) {
+    public void revokeAllSessionByUser(UsersDeletedEvent user) {
         Set<String> delKeys = new HashSet<>();
         ScanOptions opt = ScanOptions.scanOptions()
-                .match(generateSessionKey("*", id))
+                .match(generateSessionKey("*", user.userId()))
                 .build();
 
         try (Cursor<String> cursor = redisTemplate.scan(opt)) {
@@ -109,7 +110,7 @@ public class SessionService {
             cursor.forEachRemaining(delKeys::add);
         }
 
-        String credsData = generateCredentialsLookupKey(id);
+        String credsData = generateCredentialsLookupKey(user.userId());
         delKeys.add(credsData);
         redisTemplate.unlink(delKeys);
 

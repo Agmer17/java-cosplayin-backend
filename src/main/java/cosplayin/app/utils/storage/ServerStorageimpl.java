@@ -53,7 +53,7 @@ public class ServerStorageimpl implements StorageUtils {
     @Override
     public FileModel saveFile(String basePath, MultipartFile filehader, SupportedFileExt extension, String... paths) {
         String filename = UUID.randomUUID().toString() + extension.getExtension();
-        String relativePath = basePath + "/" + String.join("/", paths) + "/" + filename;
+        String relativePath = String.join("/", paths) + "/" + filename;
 
         try {
             Files.createDirectories(this.root.resolve(basePath, paths));

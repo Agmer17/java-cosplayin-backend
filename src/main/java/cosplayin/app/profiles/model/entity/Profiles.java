@@ -8,6 +8,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import cosplayin.app.profiles.model.type.Gender;
 import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import cosplayin.app.user.model.entity.Users;
 import jakarta.persistence.Column;
@@ -52,7 +53,10 @@ public class Profiles {
 
     private String bannerUrl;
 
-    private String cosplayTags;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Gender gender = Gender.MALE;
 
     @Column(nullable = false)
     @Builder.Default

@@ -27,6 +27,7 @@ import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.session.service.SessionService;
 import cosplayin.app.user.model.entity.Users;
 import cosplayin.app.user.service.UsersService;
+import cosplayin.app.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 
@@ -100,7 +101,7 @@ public class AuthService {
         }
 
         String tempUsername = dto.getName();
-        tempUsername = tempUsername.toLowerCase().replace(" ", "_");
+        tempUsername = tempUsername.toLowerCase().replace(" ", "_") + "_" + StringUtils.generateRandomToken(12);
         Users user = this.usersService.createUser(tempUsername, UserRoles.ADMIN);
 
         this.authRepository.save(
