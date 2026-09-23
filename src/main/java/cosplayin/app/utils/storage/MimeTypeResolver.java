@@ -46,8 +46,8 @@ public class MimeTypeResolver {
         return fromMimeType(mimeType).isPresent();
     }
 
-    public Optional<SupportedFileExt> detect(InputStream in, String filename) throws IOException {
-        return fromMimeType(apacheTika.detect(in, filename));
+    public Optional<SupportedFileExt> detect(InputStream in) throws IOException {
+        return fromMimeType(apacheTika.detect(in));
     }
 
 }

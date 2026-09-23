@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cosplayin.app.core.authorization.UserRoles;
 import cosplayin.app.core.authorization.UserStatus;
+import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.core.response.SuccessResponse;
 import cosplayin.app.security.anot.CurrentUser;
 import cosplayin.app.security.anot.RequireAuth;
@@ -29,12 +30,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class UsersController {
 
-    private UsersService usersService;
+    private final UsersService usersService;
 
     @GetMapping("/delete/{id}")
     @RequireAuth
     @RequireRole({ UserRoles.ADMIN })
-    public ResponseEntity<SuccessResponse<String>> deleteUsers(@PathVariable UUID id) {
+    public ResponseEntity<SuccessResponse<String>> deleteUsers(@PathVariable UUID id,
+            @CurrentUser UserCredentials ctx) {
+
+        if (id.equals(ctx.getId())) {
+            throw new ResourceConflictExceptions("you can't delete your own account!");
+        }
+
         usersService.deleteUsers(id);
         return ResponseEntity.ok().body(SuccessResponse.<String>builder()
                 .message("Successfully delete the users")

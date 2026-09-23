@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import cosplayin.app.core.exception.model.FatalErrorExceptions;
 import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
+import cosplayin.app.core.exception.model.RequestValidationException;
 import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.core.exception.model.UnauthorizedAccessExceptions;
 import cosplayin.app.core.response.ErrorResponse;
@@ -56,6 +58,21 @@ public class GlobalExceptionsHandlers {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                                 ErrorResponse.<String>builder()
                                                 .error(ex.getMessage())
+                                                .timestamp(Instant.now())
+                                                .build());
+        }
+
+        @ExceptionHandler({ RequestValidationException.class, HttpMessageNotReadableException.class })
+        public ResponseEntity<ErrorResponse<String>> handleBadRequestsException(Exception ex) {
+
+                String message = switch (ex) {
+                        case RequestValidationException e -> e.getMessage();
+                        case HttpMessageNotReadableException _ -> "invalid requets body";
+                        default -> "Bad request";
+                };
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                                ErrorResponse.<String>builder()
+                                                .error(message)
                                                 .timestamp(Instant.now())
                                                 .build());
         }
@@ -117,7 +134,6 @@ public class GlobalExceptionsHandlers {
                                                 .error(ex.getMessage())
                                                 .timestamp(Instant.now())
                                                 .build());
-
         }
 
 }

@@ -2,11 +2,13 @@ package cosplayin.app.user.service;
 
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import cosplayin.app.core.authorization.UserRoles;
 import cosplayin.app.core.authorization.UserStatus;
+import cosplayin.app.core.event.UsersDeletedEvent;
 import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.core.exception.model.RequestValidationException;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UsersService {
     private final UsersRepository userRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Users createUser(String username, UserRoles role) {
         Users user = Users.builder()
@@ -40,6 +43,8 @@ public class UsersService {
 
     public void deleteUsers(UUID id) {
         Users deletedUsers = userRepo.findById(id).orElseThrow(() -> new NotFoundException("no users found"));
+
+        eventPublisher.publishEvent(new UsersDeletedEvent(id));
         userRepo.delete(deletedUsers);
     }
 
@@ -62,6 +67,10 @@ public class UsersService {
         } catch (DataIntegrityViolationException e) {
             throw new ResourceConflictExceptions("this username already exist");
         }
+    }
+
+    public Users getUser(UUID id) {
+        return userRepo.findById(id).orElse(null);
     }
 
 }
