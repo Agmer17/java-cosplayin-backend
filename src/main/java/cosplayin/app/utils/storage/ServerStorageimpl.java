@@ -159,6 +159,7 @@ public class ServerStorageimpl implements StorageUtils {
     @Override
     public void deleteFile(String basePath, String filename, String... paths) {
         Path filepath = this.root.resolve(basePath, paths).resolve(filename);
+        System.out.println("FULL DELETED FILE PATH : " + filepath.toString());
 
         try {
             Files.deleteIfExists(filepath);

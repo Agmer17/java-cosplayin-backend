@@ -125,11 +125,24 @@ public class ProfilesService {
                 FileValidationPolicy filePolicy = new FileValidationPolicy(Set.of(SupportedFileType.IMAGE), 5242880);
                 if (updateDto.getAvatar() != null) {
                         FileModel saved = storageUtils.savePublicFile(updateDto.getAvatar(), filePolicy, avatarFolder);
+
+                        String oldPathFile = profiles.getAvatarUrl();
+
+                        if (!oldPathFile.startsWith("https://")) {
+                                storageUtils.deletePublicFile(oldPathFile);
+                        }
+
                         profiles.setAvatarUrl(saved.getFilePath());
                 }
 
                 if (updateDto.getBanner() != null) {
                         FileModel saved = storageUtils.savePublicFile(updateDto.getBanner(), filePolicy, bannerFolder);
+
+                        String oldPathFile = profiles.getBannerUrl();
+
+                        if (!oldPathFile.startsWith("https://")) {
+                                storageUtils.deletePublicFile(oldPathFile);
+                        }
                         profiles.setBannerUrl(saved.getFilePath());
                 }
 
