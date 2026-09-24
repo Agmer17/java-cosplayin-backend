@@ -15,9 +15,13 @@ import cosplayin.app.security.context.UserCredentials;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -37,6 +41,17 @@ public class PostsController {
                 .data(response)
                 .message("successfully creating your posts")
                 .build());
+    }
+
+    @GetMapping("/id/{postId}")
+    public ResponseEntity<SuccessResponse<PostsResponse>> getPostsById(@PathVariable UUID postId) {
+        PostsResponse resp = service.getPostsDetail(postId, null);
+
+        return ResponseEntity.ok().body(SuccessResponse.<PostsResponse>builder()
+                .data(resp)
+                .message("successfully creating your posts")
+                .build());
+
     }
 
 }

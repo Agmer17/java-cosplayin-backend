@@ -21,6 +21,7 @@ import tools.jackson.databind.annotation.JsonNaming;
 public class PostsMediaResponse {
 
     private UUID mediaId;
+    private UUID postsId;
     private String mediaUrl;
     private SupportedFileType mediaType;
     private Short displayOrder;

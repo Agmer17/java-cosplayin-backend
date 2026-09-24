@@ -106,7 +106,7 @@ public class GlobalExceptionsHandlers {
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<Map<String, String>> handleValidation(
+        public ResponseEntity<ErrorResponse<Map<String, String>>> handleValidation(
                         MethodArgumentNotValidException ex) {
                 Map<String, String> errors = new HashMap<>();
 
@@ -114,7 +114,7 @@ public class GlobalExceptionsHandlers {
                                 .getFieldErrors()
                                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
-                return ResponseEntity.badRequest().body(errors);
+                return ResponseEntity.badRequest().body(new ErrorResponse<Map<String, String>>(errors, Instant.now()));
         }
 
         @ExceptionHandler(NoResourceFoundException.class)
