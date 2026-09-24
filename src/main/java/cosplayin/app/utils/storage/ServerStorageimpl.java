@@ -6,12 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -24,8 +21,10 @@ import cosplayin.app.core.exception.model.RequestValidationException;
 import cosplayin.app.utils.storage.type.FileModel;
 import cosplayin.app.utils.storage.type.FileValidationPolicy;
 import cosplayin.app.utils.storage.type.SupportedFileExt;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class ServerStorageimpl implements StorageUtils {
 
     private final MimeTypeResolver mimeTypeResolver;
@@ -80,44 +79,49 @@ public class ServerStorageimpl implements StorageUtils {
     }
 
     @Override
-    public List<FileModel> saveFile(String basePath, List<MultipartFile> filehader, List<SupportedFileExt> extension,
-            String... paths) {
-
-        if (filehader.size() != extension.size()) {
+    public List<FileModel> saveFile(String basePath, List<MultipartFile> files,
+            List<SupportedFileExt> extensions, String... paths) {
+        if (files.size() != extensions.size()) {
             throw new RequestValidationException("unmatch filetype and file binary count");
         }
-
-        int total = filehader.size();
+        int total = files.size();
+        List<FileModel> saved = new ArrayList<>(total);
+        Throwable failure = null;
 
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-
-            CompletionService<IndexedResult> completionService = new ExecutorCompletionService<>(executor);
-
-            List<Future<IndexedResult>> futures = new ArrayList<>(total);
-            for (int idx = 0; idx < total; idx++) {
-                int i = idx;
-                futures.add(completionService.submit(
-                        () -> new IndexedResult(i, saveFile(basePath, filehader.get(i), extension.get(i), paths))));
+            List<Future<FileModel>> futures = new ArrayList<>(total);
+            for (int i = 0; i < total; i++) {
+                int idx = i;
+                futures.add(executor.submit(
+                        () -> saveFile(basePath, files.get(idx), extensions.get(idx), paths)));
             }
 
-            FileModel[] savedArr = new FileModel[total];
-
-            try {
-                for (int i = 0; i < total; i++) {
-                    IndexedResult result = completionService.take().get();
-                    savedArr[result.index()] = result.model();
+            // tunggu SEMUA selesai, kumpulkan yang sukses, catat kegagalan pertama
+            for (Future<FileModel> f : futures) {
+                try {
+                    saved.add(f.get());
+                } catch (ExecutionException e) {
+                    if (failure == null)
+                        failure = e.getCause();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    if (failure == null)
+                        failure = e;
+                    futures.forEach(x -> x.cancel(true));
+                    break;
                 }
-            } catch (ExecutionException | InterruptedException e) {
-
-                throw new FatalErrorExceptions(
-                        "something went wrong while trying to save the files : " + e.getMessage());
             }
-
-            return Arrays.asList(savedArr);
         }
-    }
 
-    private record IndexedResult(int index, FileModel model) {
+        if (failure != null) {
+
+            List<String> failedSavedFile = saved.stream().map(m -> m.getFilename()).toList();
+
+            deleteFile(basePath, failedSavedFile, paths);
+            throw new FatalErrorExceptions(
+                    "failed to save files: " + failure.getMessage());
+        }
+        return saved;
     }
 
     @Override
@@ -133,6 +137,7 @@ public class ServerStorageimpl implements StorageUtils {
             String... paths) {
 
         List<SupportedFileExt> fileExts = validateFile(fileheader, policy);
+
         List<FileModel> saved = saveFile(publicPath, fileheader, fileExts, paths);
 
         return saved;
@@ -164,6 +169,7 @@ public class ServerStorageimpl implements StorageUtils {
         try {
             Files.deleteIfExists(filepath);
         } catch (IOException e) {
+            log.warn("FAILED TO CLEANUP THE FILES : {}", e);
             // throw new FatalErrorExceptions("something wrong while")
             // just ignore it bruh
         }

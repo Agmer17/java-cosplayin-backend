@@ -170,4 +170,10 @@ public class ProfilesService {
 
                 return results;
         }
+
+        public Profiles getProfile(UUID id) {
+                return profileRepository.findById(id)
+                                .orElseThrow(() -> new NotFoundException("users and profile was not found"));
+
+        }
 }
