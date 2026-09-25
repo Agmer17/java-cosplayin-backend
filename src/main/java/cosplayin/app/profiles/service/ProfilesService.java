@@ -176,4 +176,9 @@ public class ProfilesService {
                                 .orElseThrow(() -> new NotFoundException("users and profile was not found"));
 
         }
+
+        public Profiles getProfile(String username) {
+                return profileRepository.findByUsername(username)
+                                .orElseThrow(() -> new NotFoundException(username + " profile's not found!"));
+        }
 }

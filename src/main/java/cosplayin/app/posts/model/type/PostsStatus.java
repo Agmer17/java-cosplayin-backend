@@ -1,5 +1,5 @@
 package cosplayin.app.posts.model.type;
 
 public enum PostsStatus {
-    VISIBLE, HIDDEN, PRIVATE
+    VISIBLE, HIDDEN
 }

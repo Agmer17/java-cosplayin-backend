@@ -30,11 +30,9 @@ public class AuthHydrationFilter implements HandlerInterceptor {
         Cookie[] cookies = request.getCookies();
 
         if (cookies != null) {
-            System.out.println("ngecek cookie : ");
             for (Cookie c : cookies) {
                 if ("access_token".equals(c.getName())) {
                     accessToken = c.getValue();
-                    System.out.println("dapet cookie : " + accessToken);
 
                 }
             }

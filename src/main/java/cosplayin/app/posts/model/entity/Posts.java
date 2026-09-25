@@ -11,6 +11,8 @@ import cosplayin.app.posts.model.type.PostsCommentStatus;
 import cosplayin.app.posts.model.type.PostsStatus;
 import cosplayin.app.user.model.entity.Users;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,8 +46,10 @@ public class Posts {
 
     private String caption;
 
+    @Enumerated(EnumType.STRING)
     private PostsStatus status;
 
+    @Enumerated(EnumType.STRING)
     private PostsCommentStatus commentAvailability;
 
     @Builder.Default

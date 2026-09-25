@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import cosplayin.app.posts.model.dto.PostsMediaResponse;
+import cosplayin.app.posts.model.entity.Posts;
 import cosplayin.app.posts.model.entity.PostsMedia;
 
 public interface PostsMediaRepository extends JpaRepository<PostsMedia, UUID> {
@@ -39,4 +40,6 @@ public interface PostsMediaRepository extends JpaRepository<PostsMedia, UUID> {
             ORDER BY pm.posts.id, pm.displayOrder ASC
             """)
     List<PostsMediaResponse> findMediaByPostIds(List<UUID> postIds);
+
+    List<PostsMedia> findByPosts(Posts posts);
 }

@@ -8,6 +8,8 @@ import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import cosplayin.app.core.authorization.UserRoles;
+import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
 import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.RequestValidationException;
 import cosplayin.app.posts.model.dto.CreatePostsDTO;
@@ -16,12 +18,14 @@ import cosplayin.app.posts.model.dto.PostsResponse;
 import cosplayin.app.posts.model.entity.Posts;
 import cosplayin.app.posts.model.entity.PostsMedia;
 import cosplayin.app.posts.model.type.PostsStatus;
+import cosplayin.app.posts.repository.PostsJdbcDao;
 import cosplayin.app.posts.repository.PostsMediaRepository;
 import cosplayin.app.posts.repository.PostsRepository;
 import cosplayin.app.profiles.model.dto.DetailProfileDTO;
 import cosplayin.app.profiles.model.entity.Profiles;
 import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import cosplayin.app.profiles.service.ProfilesService;
+import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.user.model.entity.Users;
 import cosplayin.app.utils.storage.StorageUtils;
 import cosplayin.app.utils.storage.type.FileModel;
@@ -34,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 public class PostsService {
         private final PostsRepository postsRepository;
         private final PostsMediaRepository mediaRepository;
+        private final PostsJdbcDao postsQueryRepo;
 
         private final ProfilesService profilesService;
 
@@ -56,9 +61,7 @@ public class PostsService {
                 Profiles authorProfile = profilesService.getProfile(curr);
                 Users authorData = authorProfile.getUser();
 
-                PostsStatus postsStatus = (authorProfile.getVisibility() == ProfilesVisibility.PRIVATE)
-                                ? PostsStatus.PRIVATE
-                                : PostsStatus.VISIBLE;
+                PostsStatus postsStatus = PostsStatus.VISIBLE;
 
                 Posts posts = Posts.builder()
                                 .author(authorData)
@@ -121,14 +124,14 @@ public class PostsService {
         }
 
         public PostsResponse getPostsDetail(UUID postId, UUID curr) {
-                PostsResponse response = postsRepository.findPostDetailsById(postId)
-                                .orElseThrow(() -> new NotFoundException("posts not found!"));
+                PostsResponse response = postsQueryRepo.getPostsDetailById(postId)
+                                .orElseThrow(() -> new NotFoundException("posts with this id not found"));
 
                 if (response.getStatus().equals(PostsStatus.HIDDEN)) {
                         throw new NotFoundException("posts not found");
                 }
 
-                if (response.getStatus().equals(PostsStatus.PRIVATE)) {
+                if (response.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
                         // nanti lakuin pemeriksaan kalo fitur follow udah ada
                 }
 
@@ -139,5 +142,59 @@ public class PostsService {
                 return response;
         }
 
-        // private
+        public List<PostsResponse> getAllPosts(int page, UUID id) {
+                List<PostsResponse> allPosts = postsQueryRepo.findAllPostsWithDetails(20, page);
+                return allPosts;
+        }
+
+        public List<PostsResponse> getPostsFeed(int page, UUID id) {
+                List<PostsResponse> feedData = postsQueryRepo.findRandomPosts(20, page);
+
+                return feedData;
+        }
+
+        public void deletePosts(UUID postsId, UserCredentials cred) {
+
+                Posts posts = postsRepository.findById(postsId)
+                                .orElseThrow(() -> new NotFoundException("posts not found!"));
+
+                Users author = posts.getAuthor();
+
+                boolean isOwner = author.getId().equals(cred.getId());
+                boolean isAdminOrMod = cred.getRole().equals(UserRoles.ADMIN)
+                                || cred.getRole().equals(UserRoles.MODERATOR);
+
+                if (!isOwner && !isAdminOrMod) {
+                        throw new ForbiddenAccessExceptions("you don't have permission to delete this posts");
+                }
+
+                List<PostsMedia> mediaToDelete = mediaRepository.findByPosts(posts);
+
+                List<String> deletedMediaPath = mediaToDelete.stream().map(m -> m.getMediaUrl()).toList();
+
+                storageUtils.deletePrivateFile(deletedMediaPath);
+
+                postsRepository.delete(posts);
+                mediaRepository.deleteAll(mediaToDelete);
+
+        }
+
+        public List<PostsResponse> getPostsFromUsers(String username, int page, UUID curr) {
+                Profiles profile = profilesService.getProfile(username);
+
+                if (profile.getVisibility().equals(ProfilesVisibility.PRIVATE)) {
+                        // do follow logic buatv cek udah saling follow belom
+                }
+
+                List<PostsResponse> fromUsers = postsQueryRepo.findAllByUsername(username, 20, page);
+
+                return fromUsers;
+        }
+
+        public List<PostsResponse> searchPostsByKeyword(String keyword, UUID curr, int page) {
+                List<PostsResponse> responses = postsQueryRepo.searchPosts(keyword, 20, page);
+
+                return responses;
+        }
+
 }

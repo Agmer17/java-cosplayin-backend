@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import cosplayin.app.posts.model.type.PostsCommentStatus;
 import cosplayin.app.posts.model.type.PostsStatus;
 import cosplayin.app.profiles.model.dto.DetailProfileDTO;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class PostsResponse {
     private DetailProfileDTO author;
     private String caption;
     private PostsStatus status;
+    private PostsCommentStatus commentAvailability;
     private Long likeCount;
     private Long bookmarkCount;
     private Long shareCount;
