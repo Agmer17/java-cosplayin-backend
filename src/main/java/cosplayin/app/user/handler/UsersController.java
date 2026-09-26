@@ -1,6 +1,7 @@
 package cosplayin.app.user.handler;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cosplayin.app.core.authorization.UserRoles;
@@ -33,7 +34,7 @@ public class UsersController {
 
     private final UsersService usersService;
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     @RequireAuth
     @RequireRole({ UserRoles.ADMIN })
     public ResponseEntity<SuccessResponse<String>> deleteUsers(@PathVariable UUID id,
@@ -50,8 +51,9 @@ public class UsersController {
                 .build());
     }
 
-    @GetMapping("/check-username/{username}")
-    public ResponseEntity<SuccessResponse<Boolean>> handleGetUsernameAvaibility(@PathVariable String username) {
+    @GetMapping("/username-availability")
+    public ResponseEntity<SuccessResponse<Boolean>> handleGetUsernameAvaibility(
+            @RequestParam(required = true) String username) {
 
         Boolean exist = usersService.isUsernameAvaible(username);
 
@@ -61,7 +63,7 @@ public class UsersController {
                 .build());
     }
 
-    @PatchMapping("/username")
+    @PatchMapping("/me/username")
     @RequireAuth
     @RequireUserStatus({ UserStatus.ACTIVE, UserStatus.ON_BOARDING })
     public ResponseEntity<SuccessResponse<String>> patchUsername(@Valid @RequestBody UsernameChangeDto dto,

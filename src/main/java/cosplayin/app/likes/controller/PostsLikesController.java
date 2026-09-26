@@ -25,13 +25,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
-@RequestMapping("/api/post-likes")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PostsLikesController {
 
         private final PostsLIkesService service;
 
-        @GetMapping("/post/{postsId}")
+        @GetMapping("/posts/{postsId}/likes")
         public ResponseEntity<SuccessResponse<List<DetailLikesResponseDto>>> handleGetLikeFromPosts(
                         @PathVariable UUID postsId) {
                 return ResponseEntity.ok().body(SuccessResponse.<List<DetailLikesResponseDto>>builder()
@@ -40,21 +40,20 @@ public class PostsLikesController {
                                 .build());
         }
 
-        @PostMapping("/post/{postsId}")
+        @PostMapping("/posts/{postsId}/likes")
         @RequireAuth
         @RequireUserStatus({ UserStatus.ACTIVE })
         public ResponseEntity<SuccessResponse<LocalDateTime>> handlePostsCreateLikes(
                         @PathVariable UUID postsId,
                         @CurrentUser UserCredentials cred) {
 
-                System.out.println("POSTS ID NYA ADALAH : " + postsId);
                 return ResponseEntity.ok().body(SuccessResponse.<LocalDateTime>builder()
                                 .message("successfully creating the likes")
                                 .data(service.createLike(postsId, cred.getId()))
                                 .build());
         }
 
-        @GetMapping("/user/{username}")
+        @GetMapping("/users/{username}/likes")
         @RequireAuth
         public ResponseEntity<SuccessResponse<List<PostsResponse>>> handleGetLikedPostsFromUsers(
                         @PathVariable String username,
@@ -66,7 +65,7 @@ public class PostsLikesController {
                                 .build());
         }
 
-        @GetMapping("/me")
+        @GetMapping("/profiles/me/likes")
         public ResponseEntity<SuccessResponse<List<PostsResponse>>> handleGetMyLikedPosts(
                         @CurrentUser UserCredentials cred) {
                 return ResponseEntity.ok().body(SuccessResponse.<List<PostsResponse>>builder()
@@ -75,12 +74,12 @@ public class PostsLikesController {
                                 .build());
         }
 
-        @DeleteMapping("/id/{likesId}")
+        @DeleteMapping("/posts/{postsId}/likes")
         @RequireAuth
-        public ResponseEntity<SuccessResponse<Object>> handleDeleteLikes(@PathVariable UUID likesId,
+        public ResponseEntity<SuccessResponse<Object>> handleDeleteLikes(@PathVariable UUID postsId,
                         @CurrentUser UserCredentials cred) {
 
-                service.deleteLike(cred.getId(), likesId);
+                service.deleteLike(cred.getId(), postsId);
                 return ResponseEntity.ok().body(SuccessResponse.builder()
                                 .message("successfully delete your likes from the posts")
                                 .data(null)

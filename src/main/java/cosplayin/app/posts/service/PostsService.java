@@ -1,5 +1,6 @@
 package cosplayin.app.posts.service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -27,6 +28,7 @@ import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import cosplayin.app.profiles.service.ProfilesService;
 import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.user.model.entity.Users;
+import cosplayin.app.utils.SignerUrlUtils;
 import cosplayin.app.utils.storage.StorageUtils;
 import cosplayin.app.utils.storage.type.FileModel;
 import cosplayin.app.utils.storage.type.FileValidationPolicy;
@@ -43,6 +45,8 @@ public class PostsService {
         private final ProfilesService profilesService;
 
         private final StorageUtils storageUtils;
+
+        private final SignerUrlUtils signer;
 
         @Transactional
         public PostsResponse createPosts(CreatePostsDTO dto, UUID curr) {
@@ -76,7 +80,8 @@ public class PostsService {
                                                         .posts(posts)
                                                         .displayOrder(Short.valueOf(Integer.valueOf(idx).shortValue()))
                                                         .mediaType(saved.get(idx).getFileType())
-                                                        .mediaUrl(saved.get(idx).getFilePath())
+                                                        .mediaUrl(signer.generateSignedUrl(saved.get(idx).getFilePath(),
+                                                                        Duration.ofMinutes(5)))
                                                         .build();
 
                                         return md;
@@ -135,20 +140,29 @@ public class PostsService {
                         // nanti lakuin pemeriksaan kalo fitur follow udah ada
                 }
 
-                List<PostsMediaResponse> media = mediaRepository.findMediaByPostId(postId);
+                // List<PostsMediaResponse> media = mediaRepository.findMediaByPostId(postId);
 
-                response.setMedia(media);
+                // response.setMedia(media);
+
+                signMediaUrl(response.getMedia());
 
                 return response;
         }
 
         public List<PostsResponse> getAllPosts(int page, UUID id) {
                 List<PostsResponse> allPosts = postsQueryRepo.findAllPostsWithDetails(20, page, id);
+
+                allPosts.forEach(p -> {
+                        signMediaUrl(p.getMedia());
+                });
                 return allPosts;
         }
 
         public List<PostsResponse> getPostsFeed(int page, UUID id) {
                 List<PostsResponse> feedData = postsQueryRepo.findRandomPosts(20, page, id);
+                feedData.forEach(p -> {
+                        signMediaUrl(p.getMedia());
+                });
 
                 return feedData;
         }
@@ -188,21 +202,40 @@ public class PostsService {
 
                 List<PostsResponse> fromUsers = postsQueryRepo.findAllByUsername(username, 20, page, curr);
 
+                fromUsers.forEach(p -> {
+                        signMediaUrl(p.getMedia());
+                });
                 return fromUsers;
         }
 
         public List<PostsResponse> searchPostsByKeyword(String keyword, UUID curr, int page) {
                 List<PostsResponse> responses = postsQueryRepo.searchPosts(keyword, 20, page, curr);
 
+                responses.forEach(p -> {
+                        signMediaUrl(p.getMedia());
+                });
+
                 return responses;
         }
 
         public List<PostsResponse> findPostsDetailsInIds(List<UUID> ids, UUID curr) {
-                return postsQueryRepo.findPostsInId(ids, curr);
+
+                List<PostsResponse> response = postsQueryRepo.findPostsInId(ids, curr);
+                response.forEach(p -> {
+                        signMediaUrl(p.getMedia());
+                });
+
+                return response;
         }
 
         public Posts findEntityById(UUID id) {
                 return postsRepository.findById(id).orElseThrow(() -> new NotFoundException("posts not found"));
         }
 
+        private void signMediaUrl(List<PostsMediaResponse> data) {
+                data.forEach(med -> {
+                        String url = "private/" + med.getMediaUrl();
+                        med.setMediaUrl(signer.generateSignedUrl(url, Duration.ofMinutes(5)));
+                });
+        }
 }

@@ -54,7 +54,7 @@ public class profilesController {
                                                 .build());
         }
 
-        @PostMapping("/submit-onboarding")
+        @PostMapping("/me/onboarding")
         @RequireAuth
         @RequireUserStatus({ UserStatus.ON_BOARDING })
         public ResponseEntity<SuccessResponse<DetailProfileDTO>> postOnboarding(@CurrentUser UserCredentials curr,
@@ -67,7 +67,7 @@ public class profilesController {
                                 .build());
         }
 
-        @PatchMapping("/update")
+        @PatchMapping("/me")
         @RequireAuth
         @RequireUserStatus({ UserStatus.ACTIVE })
         public ResponseEntity<SuccessResponse<DetailProfileDTO>> patchMyProfiles(@CurrentUser UserCredentials curr,

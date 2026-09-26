@@ -32,6 +32,7 @@ public class PostsResponse {
     private Long shareCount;
     private LocalDateTime createdAt;
     private boolean isLiked;
+    private boolean isBookmarked;
     private List<PostsMediaResponse> media;
 
 }

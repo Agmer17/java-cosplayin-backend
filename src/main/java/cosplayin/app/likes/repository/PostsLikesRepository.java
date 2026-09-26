@@ -1,6 +1,7 @@
 package cosplayin.app.likes.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -46,4 +47,5 @@ public interface PostsLikesRepository extends JpaRepository<PostsLikes, UUID> {
             """)
     List<UUID> findLikedPostsIdsByUsername(String username);
 
+    Optional<PostsLikes> findByPosts_IdAndUser_Id(UUID postsId, UUID userId);
 }

@@ -47,7 +47,13 @@ public class PostsJdbcDao {
                         FROM posts_likes pl
                         WHERE pl.posts_id = p.id
                         AND pl.user_id = :userId
-                    ) AS is_liked
+                    ) AS is_liked,
+                        EXISTS (
+                        SELECT 1
+                        FROM post_bookmark pb
+                        WHERE pb.posts_id = p.id
+                            and pb.user_id = :userId
+                    ) as is_bookmarked
                 FROM posts p
                 JOIN profiles ap ON ap.id = p.author_id
                 JOIN users u ON u.id = ap.id

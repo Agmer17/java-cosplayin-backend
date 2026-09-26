@@ -8,7 +8,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
 import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.likes.model.dto.DetailLikesResponseDto;
@@ -80,13 +79,11 @@ public class PostsLIkesService {
         return data;
     }
 
-    public void deleteLike(UUID curr, UUID likesId) {
-        PostsLikes likes = likesRepository.findById(likesId)
+    public void deleteLike(UUID curr, UUID postsId) {
+        PostsLikes likes = likesRepository.findByPosts_IdAndUser_Id(postsId, curr)
                 .orElseThrow(() -> new NotFoundException("likes data was not found"));
 
-        if (!likes.getUser().getId().equals(curr)) {
-            throw new ForbiddenAccessExceptions("you can't delete this likes");
-        }
+        likes.getPosts().setLikeCount(likes.getPosts().getLikeCount() - 1);
         likesRepository.delete(likes);
     }
 }

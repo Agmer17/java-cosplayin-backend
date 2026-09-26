@@ -44,6 +44,7 @@ public class PostsResponseRowMapper implements RowMapper<PostsResponse> {
                                         .bookmarkCount(rs.getLong("bookmark_count"))
                                         .shareCount(rs.getLong("share_count"))
                                         .isLiked(rs.getBoolean("is_liked"))
+                                        .isBookmarked(rs.getBoolean("is_bookmarked"))
                                         .createdAt(
                                                         rs.getObject(
                                                                         "created_at",
