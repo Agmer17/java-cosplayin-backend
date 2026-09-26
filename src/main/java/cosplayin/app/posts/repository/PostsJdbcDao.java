@@ -41,7 +41,13 @@ public class PostsJdbcDao {
                     p.bookmark_count,
                     p.share_count,
                     p.created_at,
-                    COALESCE(pm.media, '[]'::json) AS media
+                    COALESCE(pm.media, '[]'::json) AS media,
+                    EXISTS (
+                        SELECT 1
+                        FROM posts_likes pl
+                        WHERE pl.posts_id = p.id
+                        AND pl.user_id = :userId
+                    ) AS is_liked
                 FROM posts p
                 JOIN profiles ap ON ap.id = p.author_id
                 JOIN users u ON u.id = ap.id
@@ -62,7 +68,7 @@ public class PostsJdbcDao {
                 ) pm ON TRUE
             """;
 
-    public Optional<PostsResponse> getPostsDetailById(UUID id) {
+    public Optional<PostsResponse> getPostsDetailById(UUID id, UUID userId) {
         String sql = POSTS_PROJECTION + """
                     WHERE p.id = :postId
                 """;
@@ -71,7 +77,9 @@ public class PostsJdbcDao {
             return Optional.ofNullable(
                     jdbcTemplate.queryForObject(
                             sql,
-                            Map.of("postId", id),
+                            Map.of(
+                                    "postId", id,
+                                    "userId", userId),
                             postsResponseRowMapper));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -80,7 +88,8 @@ public class PostsJdbcDao {
 
     public List<PostsResponse> findAllPostsWithDetails(
             int limit,
-            long offset) {
+            long offset,
+            UUID userId) {
 
         String sql = POSTS_PROJECTION + """
                     ORDER BY p.created_at DESC
@@ -92,13 +101,15 @@ public class PostsJdbcDao {
                 sql,
                 Map.of(
                         "limit", limit,
-                        "offset", offset),
+                        "offset", offset,
+                        "userId", userId),
                 postsResponseRowMapper);
     }
 
     public List<PostsResponse> findRandomPosts(
             int limit,
-            long offset) {
+            long offset,
+            UUID userId) {
 
         String sql = POSTS_PROJECTION + """
                     WHERE p.status <> 'HIDDEN'
@@ -111,14 +122,27 @@ public class PostsJdbcDao {
                 sql,
                 Map.of(
                         "limit", limit,
-                        "offset", offset),
+                        "offset", offset,
+                        "userId", userId),
                 postsResponseRowMapper);
+    }
+
+    public List<PostsResponse> findPostsInId(List<UUID> ids, UUID curr) {
+        String sql = POSTS_PROJECTION + """
+                where p.id in (:postIds)
+                """;
+
+        return jdbcTemplate.query(sql, Map.of(
+                "userId", curr,
+                "postIds", ids), postsResponseRowMapper);
+
     }
 
     public List<PostsResponse> findAllByUsername(
             String username,
             int limit,
-            long offset) {
+            long offset,
+            UUID userId) {
 
         String sql = POSTS_PROJECTION + """
                     WHERE u.username = :username
@@ -133,14 +157,16 @@ public class PostsJdbcDao {
                 Map.of(
                         "username", username,
                         "limit", limit,
-                        "offset", offset),
+                        "offset", offset,
+                        "userId", userId),
                 postsResponseRowMapper);
     }
 
     public List<PostsResponse> searchPosts(
             String keyword,
             int limit,
-            long offset) {
+            long offset,
+            UUID userId) {
 
         String sql = POSTS_PROJECTION + """
                     WHERE p.status = 'VISIBLE'
@@ -159,7 +185,8 @@ public class PostsJdbcDao {
                 Map.of(
                         "query", "%" + keyword + "%",
                         "limit", limit,
-                        "offset", offset),
+                        "offset", offset,
+                        "userId", userId),
                 postsResponseRowMapper);
     }
 }

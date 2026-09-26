@@ -22,40 +22,41 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class PostsResponseRowMapper implements RowMapper<PostsResponse> {
 
-    private final ObjectMapper mapper;
+        private final ObjectMapper mapper;
 
-    @Override
-    public PostsResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
-        try {
-            return PostsResponse.builder()
-                    .postsId(rs.getObject("id", UUID.class))
-                    .author(
-                            mapper.readValue(
-                                    rs.getString("author"),
-                                    DetailProfileDTO.class))
-                    .caption(rs.getString("caption"))
-                    .status(
-                            PostsStatus.valueOf(
-                                    rs.getString("status")))
-                    .commentAvailability(
-                            PostsCommentStatus.valueOf(
-                                    rs.getString("comment_availability")))
-                    .likeCount(rs.getLong("like_count"))
-                    .bookmarkCount(rs.getLong("bookmark_count"))
-                    .shareCount(rs.getLong("share_count"))
-                    .createdAt(
-                            rs.getObject(
-                                    "created_at",
-                                    LocalDateTime.class))
-                    .media(
-                            mapper.readValue(
-                                    rs.getString("media"),
-                                    new TypeReference<List<PostsMediaResponse>>() {
-                                    }))
-                    .build();
+        @Override
+        public PostsResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+                try {
+                        return PostsResponse.builder()
+                                        .postsId(rs.getObject("id", UUID.class))
+                                        .author(
+                                                        mapper.readValue(
+                                                                        rs.getString("author"),
+                                                                        DetailProfileDTO.class))
+                                        .caption(rs.getString("caption"))
+                                        .status(
+                                                        PostsStatus.valueOf(
+                                                                        rs.getString("status")))
+                                        .commentAvailability(
+                                                        PostsCommentStatus.valueOf(
+                                                                        rs.getString("comment_availability")))
+                                        .likeCount(rs.getLong("like_count"))
+                                        .bookmarkCount(rs.getLong("bookmark_count"))
+                                        .shareCount(rs.getLong("share_count"))
+                                        .isLiked(rs.getBoolean("is_liked"))
+                                        .createdAt(
+                                                        rs.getObject(
+                                                                        "created_at",
+                                                                        LocalDateTime.class))
+                                        .media(
+                                                        mapper.readValue(
+                                                                        rs.getString("media"),
+                                                                        new TypeReference<List<PostsMediaResponse>>() {
+                                                                        }))
+                                        .build();
 
-        } catch (Exception e) {
-            throw new SQLException("Failed to map PostsResponse", e);
+                } catch (Exception e) {
+                        throw new SQLException("Failed to map PostsResponse", e);
+                }
         }
-    }
 }

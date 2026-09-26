@@ -124,7 +124,7 @@ public class PostsService {
         }
 
         public PostsResponse getPostsDetail(UUID postId, UUID curr) {
-                PostsResponse response = postsQueryRepo.getPostsDetailById(postId)
+                PostsResponse response = postsQueryRepo.getPostsDetailById(postId, curr)
                                 .orElseThrow(() -> new NotFoundException("posts with this id not found"));
 
                 if (response.getStatus().equals(PostsStatus.HIDDEN)) {
@@ -143,12 +143,12 @@ public class PostsService {
         }
 
         public List<PostsResponse> getAllPosts(int page, UUID id) {
-                List<PostsResponse> allPosts = postsQueryRepo.findAllPostsWithDetails(20, page);
+                List<PostsResponse> allPosts = postsQueryRepo.findAllPostsWithDetails(20, page, id);
                 return allPosts;
         }
 
         public List<PostsResponse> getPostsFeed(int page, UUID id) {
-                List<PostsResponse> feedData = postsQueryRepo.findRandomPosts(20, page);
+                List<PostsResponse> feedData = postsQueryRepo.findRandomPosts(20, page, id);
 
                 return feedData;
         }
@@ -186,15 +186,23 @@ public class PostsService {
                         // do follow logic buatv cek udah saling follow belom
                 }
 
-                List<PostsResponse> fromUsers = postsQueryRepo.findAllByUsername(username, 20, page);
+                List<PostsResponse> fromUsers = postsQueryRepo.findAllByUsername(username, 20, page, curr);
 
                 return fromUsers;
         }
 
         public List<PostsResponse> searchPostsByKeyword(String keyword, UUID curr, int page) {
-                List<PostsResponse> responses = postsQueryRepo.searchPosts(keyword, 20, page);
+                List<PostsResponse> responses = postsQueryRepo.searchPosts(keyword, 20, page, curr);
 
                 return responses;
+        }
+
+        public List<PostsResponse> findPostsDetailsInIds(List<UUID> ids, UUID curr) {
+                return postsQueryRepo.findPostsInId(ids, curr);
+        }
+
+        public Posts findEntityById(UUID id) {
+                return postsRepository.findById(id).orElseThrow(() -> new NotFoundException("posts not found"));
         }
 
 }
