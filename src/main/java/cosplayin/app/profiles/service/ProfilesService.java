@@ -128,7 +128,7 @@ public class ProfilesService {
 
                         String oldPathFile = profiles.getAvatarUrl();
 
-                        if (!oldPathFile.startsWith("https://")) {
+                        if (oldPathFile != null && !oldPathFile.startsWith("https://")) {
                                 storageUtils.deletePublicFile(oldPathFile);
                         }
 
@@ -140,7 +140,7 @@ public class ProfilesService {
 
                         String oldPathFile = profiles.getBannerUrl();
 
-                        if (!oldPathFile.startsWith("https://")) {
+                        if (oldPathFile != null && !oldPathFile.startsWith("https://")) {
                                 storageUtils.deletePublicFile(oldPathFile);
                         }
                         profiles.setBannerUrl(saved.getFilePath());

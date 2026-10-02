@@ -65,6 +65,7 @@ public class PostsController {
         @GetMapping("/posts/{postId}")
         public ResponseEntity<SuccessResponse<PostsResponse>> getPostsById(@PathVariable UUID postId,
                         HttpServletRequest request) {
+
                 UUID viewerId = getViewerId(request);
 
                 PostsResponse resp = service.getPostsDetail(postId, viewerId);

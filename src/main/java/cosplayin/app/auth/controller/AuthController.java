@@ -52,13 +52,11 @@ public class AuthController {
                                 .sameSite("lax")
                                 .build();
 
-                return ResponseEntity.ok()
+                return ResponseEntity
+                                .status(HttpStatus.FOUND)
+                                .location(URI.create("http://localhost:3000/"))
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                                .body(
-                                                SuccessResponse.<String>builder()
-                                                                .message("successfully logged in with google")
-                                                                .data(accessToken)
-                                                                .build());
+                                .build();
         }
 
         @GetMapping("/discord")
@@ -73,13 +71,11 @@ public class AuthController {
                                 .sameSite("lax")
                                 .build();
 
-                return ResponseEntity.ok()
+                return ResponseEntity
+                                .status(HttpStatus.FOUND)
+                                .location(URI.create("http://localhost:3000/"))
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                                .body(
-                                                SuccessResponse.<String>builder()
-                                                                .message("successfully logged in with discord")
-                                                                .data(accessToken)
-                                                                .build());
+                                .build();
         }
 
         @GetMapping("/logout")

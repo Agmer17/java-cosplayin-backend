@@ -79,6 +79,7 @@ public class PostsLIkesService {
         return data;
     }
 
+    @Transactional
     public void deleteLike(UUID curr, UUID postsId) {
         PostsLikes likes = likesRepository.findByPosts_IdAndUser_Id(postsId, curr)
                 .orElseThrow(() -> new NotFoundException("likes data was not found"));

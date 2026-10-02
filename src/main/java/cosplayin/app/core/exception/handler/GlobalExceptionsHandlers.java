@@ -128,6 +128,7 @@ public class GlobalExceptionsHandlers {
 
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse<String>> handleUncaughtExceptions(Exception ex) {
+                ex.printStackTrace();
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                                 ErrorResponse.<String>builder()
                                                 .error(ex.getMessage())

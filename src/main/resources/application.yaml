@@ -41,6 +41,7 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false
+    
 
   mail:
     host: stmp.gmail.com

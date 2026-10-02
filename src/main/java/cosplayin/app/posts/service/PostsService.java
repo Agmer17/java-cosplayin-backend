@@ -80,8 +80,7 @@ public class PostsService {
                                                         .posts(posts)
                                                         .displayOrder(Short.valueOf(Integer.valueOf(idx).shortValue()))
                                                         .mediaType(saved.get(idx).getFileType())
-                                                        .mediaUrl(signer.generateSignedUrl(saved.get(idx).getFilePath(),
-                                                                        Duration.ofMinutes(5)))
+                                                        .mediaUrl("/" + saved.get(idx).getFilePath())
                                                         .build();
 
                                         return md;
@@ -113,6 +112,7 @@ public class PostsService {
                         return resp;
                 }).toList();
 
+                signMediaUrl(mediaResponses);
                 PostsResponse response = PostsResponse.builder()
                                 .postsId(posts.getId())
                                 .author(authorResponseDto)
@@ -234,7 +234,7 @@ public class PostsService {
 
         private void signMediaUrl(List<PostsMediaResponse> data) {
                 data.forEach(med -> {
-                        String url = "private/" + med.getMediaUrl();
+                        String url = "private" + med.getMediaUrl();
                         med.setMediaUrl(signer.generateSignedUrl(url, Duration.ofMinutes(5)));
                 });
         }

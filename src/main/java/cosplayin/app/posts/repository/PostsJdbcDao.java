@@ -2,6 +2,7 @@ package cosplayin.app.posts.repository;
 
 import cosplayin.app.posts.model.mapper.PostsResponseRowMapper;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,12 +81,14 @@ public class PostsJdbcDao {
                 """;
 
         try {
+            Map<String, Object> params = new HashMap<>();
+
+            params.put("postId", id);
+            params.put("userId", userId);
             return Optional.ofNullable(
                     jdbcTemplate.queryForObject(
                             sql,
-                            Map.of(
-                                    "postId", id,
-                                    "userId", userId),
+                            params,
                             postsResponseRowMapper));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -103,12 +106,14 @@ public class PostsJdbcDao {
                     OFFSET :offset
                 """;
 
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", limit);
+        params.put("offset", offset);
+        params.put("userId", userId);
+
         return jdbcTemplate.query(
                 sql,
-                Map.of(
-                        "limit", limit,
-                        "offset", offset,
-                        "userId", userId),
+                params,
                 postsResponseRowMapper);
     }
 
@@ -124,24 +129,33 @@ public class PostsJdbcDao {
                     OFFSET :offset
                 """;
 
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", limit);
+        params.put("offset", offset);
+        params.put("userId", userId);
+
         return jdbcTemplate.query(
                 sql,
-                Map.of(
-                        "limit", limit,
-                        "offset", offset,
-                        "userId", userId),
+                params,
                 postsResponseRowMapper);
     }
 
     public List<PostsResponse> findPostsInId(List<UUID> ids, UUID curr) {
+
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
         String sql = POSTS_PROJECTION + """
                 where p.id in (:postIds)
                 """;
 
-        return jdbcTemplate.query(sql, Map.of(
-                "userId", curr,
-                "postIds", ids), postsResponseRowMapper);
+        Map<String, Object> params = new HashMap<>();
 
+        params.put("userId", curr);
+        params.put("postIds", ids);
+
+        return jdbcTemplate.query(sql, params, postsResponseRowMapper);
     }
 
     public List<PostsResponse> findAllByUsername(
@@ -158,13 +172,15 @@ public class PostsJdbcDao {
                     OFFSET :offset
                 """;
 
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", limit);
+        params.put("offset", offset);
+        params.put("userId", userId);
+        params.put("username", username);
+
         return jdbcTemplate.query(
                 sql,
-                Map.of(
-                        "username", username,
-                        "limit", limit,
-                        "offset", offset,
-                        "userId", userId),
+                params,
                 postsResponseRowMapper);
     }
 
@@ -185,6 +201,13 @@ public class PostsJdbcDao {
                     LIMIT :limit
                     OFFSET :offset
                 """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("query", "%" + keyword + "%");
+        params.put("limit", limit);
+
+        params.put("offset", offset);
+        params.put("userId", userId);
 
         return jdbcTemplate.query(
                 sql,
