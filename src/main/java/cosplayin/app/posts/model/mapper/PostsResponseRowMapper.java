@@ -13,7 +13,7 @@ import cosplayin.app.posts.model.dto.PostsMediaResponse;
 import cosplayin.app.posts.model.dto.PostsResponse;
 import cosplayin.app.posts.model.type.PostsCommentStatus;
 import cosplayin.app.posts.model.type.PostsStatus;
-import cosplayin.app.profiles.model.dto.DetailProfileDTO;
+import cosplayin.app.profiles.model.dto.SimpleProfileDTO;
 import lombok.RequiredArgsConstructor;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -32,7 +32,7 @@ public class PostsResponseRowMapper implements RowMapper<PostsResponse> {
                                         .author(
                                                         mapper.readValue(
                                                                         rs.getString("author"),
-                                                                        DetailProfileDTO.class))
+                                                                        SimpleProfileDTO.class))
                                         .caption(rs.getString("caption"))
                                         .status(
                                                         PostsStatus.valueOf(

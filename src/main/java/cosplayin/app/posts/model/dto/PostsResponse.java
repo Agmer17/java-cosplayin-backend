@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import cosplayin.app.posts.model.type.PostsCommentStatus;
 import cosplayin.app.posts.model.type.PostsStatus;
-import cosplayin.app.profiles.model.dto.DetailProfileDTO;
+import cosplayin.app.profiles.model.dto.SimpleProfileDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,7 +23,7 @@ import tools.jackson.databind.annotation.JsonNaming;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class PostsResponse {
     private UUID postsId;
-    private DetailProfileDTO author;
+    private SimpleProfileDTO author;
     private String caption;
     private PostsStatus status;
     private PostsCommentStatus commentAvailability;

@@ -22,7 +22,7 @@ import cosplayin.app.posts.model.type.PostsStatus;
 import cosplayin.app.posts.repository.PostsJdbcDao;
 import cosplayin.app.posts.repository.PostsMediaRepository;
 import cosplayin.app.posts.repository.PostsRepository;
-import cosplayin.app.profiles.model.dto.DetailProfileDTO;
+import cosplayin.app.profiles.model.dto.SimpleProfileDTO;
 import cosplayin.app.profiles.model.entity.Profiles;
 import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import cosplayin.app.profiles.service.ProfilesService;
@@ -80,7 +80,7 @@ public class PostsService {
                                                         .posts(posts)
                                                         .displayOrder(Short.valueOf(Integer.valueOf(idx).shortValue()))
                                                         .mediaType(saved.get(idx).getFileType())
-                                                        .mediaUrl("/" + saved.get(idx).getFilePath())
+                                                        .mediaUrl(saved.get(idx).getFilePath())
                                                         .build();
 
                                         return md;
@@ -89,15 +89,12 @@ public class PostsService {
                 postsRepository.save(posts);
                 mediaRepository.saveAll(media);
 
-                DetailProfileDTO authorResponseDto = DetailProfileDTO.builder()
+                SimpleProfileDTO authorResponseDto = SimpleProfileDTO.builder()
                                 .id(curr)
                                 .displayName(authorProfile.getDisplayName())
-                                .bio(authorProfile.getBio())
                                 .avatarUrl(authorProfile.getAvatarUrl())
-                                .bannerUrl(authorProfile.getBannerUrl())
                                 .visibility(authorProfile.getVisibility())
                                 .username(authorData.getUsername())
-                                .userStatus(authorData.getStatus())
                                 .userRole(authorData.getRole())
                                 .build();
 

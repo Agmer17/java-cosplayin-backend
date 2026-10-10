@@ -63,6 +63,8 @@ public class Profiles {
     @Enumerated(value = EnumType.STRING)
     private ProfilesVisibility visibility = ProfilesVisibility.PUBLIC;
 
+    private Integer followerCount;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

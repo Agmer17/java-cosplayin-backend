@@ -43,6 +43,7 @@ public class ProfilesService {
                                 .user(user)
                                 .displayName(fullname)
                                 .avatarUrl(avatarUrl)
+                                .followerCount(0)
                                 .build();
 
                 return profileRepository.save(profile);

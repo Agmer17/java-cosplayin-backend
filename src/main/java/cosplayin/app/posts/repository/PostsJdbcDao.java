@@ -27,12 +27,9 @@ public class PostsJdbcDao {
                     json_build_object(
                         'id', ap.id,
                         'display_name', ap.display_name,
-                        'bio', ap.bio,
                         'avatar_url', ap.avatar_url,
-                        'banner_url', ap.banner_url,
                         'visibility', ap.visibility,
                         'username', u.username,
-                        'user_status', u.status,
                         'user_role', u.role
                     ) AS author,
                     p.caption,
