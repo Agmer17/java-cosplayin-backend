@@ -25,6 +25,7 @@ public class CommentMapper implements RowMapper<CommentResponse> {
                     .username(rs.getString("username"))
                     .postsId(rs.getObject("posts_id", UUID.class))
                     .replyCount(rs.getInt("reply_count"))
+                    .likeCount(rs.getInt("like_count"))
                     .build();
         } catch (Exception e) {
             throw new SQLException("cannot mapping the row from the datavase : ", e.getMessage());

@@ -53,18 +53,19 @@ public class PostsCommentService {
                 .posts(posts)
                 .comment(dto.getComment())
                 .parentComment(parentComment)
+                .likeCount(0)
                 .build();
 
         commentRepository.saveAndFlush(comment);
         posts.setCommentCount(posts.getCommentCount() + 1);
 
-        CommentResponse saved = commentQuery.getByCommentId(comment.getId())
+        CommentResponse saved = commentQuery.getByCommentId(comment.getId(), currentUser)
                 .orElseThrow(() -> new NotFoundException("comment was not found!"));
 
         return saved;
     }
 
-    public List<CommentResponse> getCommentResponseFromPosts(UUID postsId) {
+    public List<CommentResponse> getCommentResponseFromPosts(UUID postsId, UUID curr) {
 
         PostsResponse resp = postsService.getPostsDetail(postsId, null);
 
@@ -72,12 +73,12 @@ public class PostsCommentService {
             // do something
         }
 
-        return commentQuery.getCommentFromPosts(postsId);
+        return commentQuery.getCommentFromPosts(postsId, curr);
     }
 
-    public List<CommentResponse> getReplyFromComment(UUID commentId) {
+    public List<CommentResponse> getReplyFromComment(UUID commentId, UUID curr) {
 
-        List<CommentResponse> response = commentQuery.getReplyFrom(commentId);
+        List<CommentResponse> response = commentQuery.getReplyFrom(commentId, curr);
 
         System.out.println("JUMLAH HASIL : " + response.size());
 
@@ -104,5 +105,9 @@ public class PostsCommentService {
 
         commentRepository.deleteById(commentId);
 
+    }
+
+    public PostsComment getEntity(UUID id) {
+        return commentRepository.findById(id).orElseThrow(() -> new NotFoundException("comments not found!"));
     }
 }

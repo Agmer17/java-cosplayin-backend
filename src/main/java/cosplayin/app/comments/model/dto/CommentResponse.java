@@ -10,13 +10,14 @@ import tools.jackson.databind.annotation.JsonNaming;
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record CommentResponse(
-                UUID id,
-                UUID postsId,
-                String comment,
-                String profilePicture,
-                int replyCount,
-                String username,
-                UUID parentId,
-                LocalDateTime createdAt) {
+        UUID id,
+        UUID postsId,
+        String comment,
+        String profilePicture,
+        Integer replyCount,
+        String username,
+        UUID parentId,
+        Integer likeCount,
+        LocalDateTime createdAt) {
 
 }

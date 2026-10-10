@@ -12,6 +12,8 @@ import cosplayin.app.security.anot.CurrentUser;
 import cosplayin.app.security.anot.RequireAuth;
 import cosplayin.app.security.anot.RequireUserStatus;
 import cosplayin.app.security.context.UserCredentials;
+import cosplayin.app.session.model.SessionDataModel;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -50,21 +52,25 @@ public class CommentController {
 
         @GetMapping("/posts/{id}/comment")
         public ResponseEntity<SuccessResponse<List<CommentResponse>>> getCOmmentFromPosts(
-                        @PathVariable UUID id) {
+                        @PathVariable UUID id, HttpServletRequest req) {
+
+                UUID curr = this.getCurrent(req);
+
                 return ResponseEntity.ok().body(
                                 SuccessResponse.<List<CommentResponse>>builder()
                                                 .message("successfully getting the comment from the posts")
-                                                .data(commentService.getCommentResponseFromPosts(id))
+                                                .data(commentService.getCommentResponseFromPosts(id, curr))
                                                 .build());
         }
 
         @GetMapping("/comment/{id}/replies")
-        public ResponseEntity<SuccessResponse<List<CommentResponse>>> getCommentReplies(@PathVariable UUID id) {
-                System.out.println("ID YG DIKIRIM : " + id);
+        public ResponseEntity<SuccessResponse<List<CommentResponse>>> getCommentReplies(@PathVariable UUID id,
+                        HttpServletRequest req) {
+                UUID curr = this.getCurrent(req);
                 return ResponseEntity.ok().body(
                                 SuccessResponse.<List<CommentResponse>>builder()
                                                 .message("successfully getting the comment from the posts")
-                                                .data(commentService.getReplyFromComment(id))
+                                                .data(commentService.getReplyFromComment(id, curr))
                                                 .build());
         }
 
@@ -80,6 +86,12 @@ public class CommentController {
                                                 .message("successfully deleteing the comment")
                                                 .data(null)
                                                 .build());
+        }
+
+        private UUID getCurrent(HttpServletRequest request) {
+                SessionDataModel session = (SessionDataModel) request.getAttribute("session");
+
+                return session != null ? session.getId() : null;
         }
 
 }
