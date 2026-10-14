@@ -121,6 +121,7 @@ public class PostsJdbcDao {
 
         String sql = POSTS_PROJECTION + """
                     WHERE p.status <> 'HIDDEN'
+                        AND ap.visibility ='PUBLIC'
                     ORDER BY RANDOM()
                     LIMIT :limit
                     OFFSET :offset
@@ -194,6 +195,7 @@ public class PostsJdbcDao {
                           OR u.username ILIKE :query
                           OR ap.display_name ILIKE :query
                       )
+                      AND ap.visibility = 'PUBLIC'
                     ORDER BY p.created_at DESC
                     LIMIT :limit
                     OFFSET :offset
@@ -208,11 +210,7 @@ public class PostsJdbcDao {
 
         return jdbcTemplate.query(
                 sql,
-                Map.of(
-                        "query", "%" + keyword + "%",
-                        "limit", limit,
-                        "offset", offset,
-                        "userId", userId),
+                params,
                 postsResponseRowMapper);
     }
 }

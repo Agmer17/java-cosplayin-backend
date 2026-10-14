@@ -231,7 +231,7 @@ public class PostsService {
 
         private void signMediaUrl(List<PostsMediaResponse> data) {
                 data.forEach(med -> {
-                        String url = "private" + med.getMediaUrl();
+                        String url = "private/" + med.getMediaUrl();
                         med.setMediaUrl(signer.generateSignedUrl(url, Duration.ofMinutes(5)));
                 });
         }

@@ -16,7 +16,7 @@ import cosplayin.app.security.anot.RequireAuth;
 import cosplayin.app.security.anot.RequireRole;
 import cosplayin.app.security.anot.RequireUserStatus;
 import cosplayin.app.security.context.UserCredentials;
-import cosplayin.app.session.model.SessionDataModel;
+import cosplayin.app.utils.GetOptionalCurrentUsers;
 import cosplayin.app.utils.SignerUrlUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -66,7 +66,7 @@ public class PostsController {
         public ResponseEntity<SuccessResponse<PostsResponse>> getPostsById(@PathVariable UUID postId,
                         HttpServletRequest request) {
 
-                UUID viewerId = getViewerId(request);
+                UUID viewerId = GetOptionalCurrentUsers.getViewerId(request);
 
                 PostsResponse resp = service.getPostsDetail(postId, viewerId);
 
@@ -94,7 +94,7 @@ public class PostsController {
         public ResponseEntity<SuccessResponse<List<PostsResponse>>> handleGetPostsFeed(
                         @RequestParam(defaultValue = "0", required = false) int page, HttpServletRequest request) {
 
-                UUID viewerId = getViewerId(request);
+                UUID viewerId = GetOptionalCurrentUsers.getViewerId(request);
                 List<PostsResponse> resp = service.getPostsFeed(page, viewerId);
                 return ResponseEntity.ok().body(SuccessResponse.<List<PostsResponse>>builder()
                                 .data(resp)
@@ -121,7 +121,7 @@ public class PostsController {
                         @PathVariable String username,
                         HttpServletRequest request) {
 
-                UUID viewerId = getViewerId(request);
+                UUID viewerId = GetOptionalCurrentUsers.getViewerId(request);
 
                 List<PostsResponse> resp = service.getPostsFromUsers(username, page, viewerId);
                 return ResponseEntity.ok().body(SuccessResponse.<List<PostsResponse>>builder()
@@ -135,7 +135,7 @@ public class PostsController {
                         @RequestParam(required = false, defaultValue = "0") int page,
                         @RequestParam(required = false, defaultValue = "") String query,
                         HttpServletRequest request) {
-                UUID viewerId = getViewerId(request);
+                UUID viewerId = GetOptionalCurrentUsers.getViewerId(request);
 
                 List<PostsResponse> resp = service.searchPostsByKeyword(query, viewerId, page);
                 return ResponseEntity.ok().body(SuccessResponse.<List<PostsResponse>>builder()
@@ -176,12 +176,6 @@ public class PostsController {
                 return ResponseEntity.ok()
                                 .contentType(mediaType)
                                 .body(resource);
-        }
-
-        private UUID getViewerId(HttpServletRequest request) {
-                SessionDataModel session = (SessionDataModel) request.getAttribute("session");
-
-                return session != null ? session.getId() : null;
         }
 
 }

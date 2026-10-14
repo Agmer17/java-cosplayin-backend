@@ -12,7 +12,7 @@ import cosplayin.app.security.anot.CurrentUser;
 import cosplayin.app.security.anot.RequireAuth;
 import cosplayin.app.security.anot.RequireUserStatus;
 import cosplayin.app.security.context.UserCredentials;
-import cosplayin.app.session.model.SessionDataModel;
+import cosplayin.app.utils.GetOptionalCurrentUsers;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -54,7 +54,7 @@ public class CommentController {
         public ResponseEntity<SuccessResponse<List<CommentResponse>>> getCOmmentFromPosts(
                         @PathVariable UUID id, HttpServletRequest req) {
 
-                UUID curr = this.getCurrent(req);
+                UUID curr = GetOptionalCurrentUsers.getViewerId(req);
 
                 return ResponseEntity.ok().body(
                                 SuccessResponse.<List<CommentResponse>>builder()
@@ -66,7 +66,7 @@ public class CommentController {
         @GetMapping("/comment/{id}/replies")
         public ResponseEntity<SuccessResponse<List<CommentResponse>>> getCommentReplies(@PathVariable UUID id,
                         HttpServletRequest req) {
-                UUID curr = this.getCurrent(req);
+                UUID curr = GetOptionalCurrentUsers.getViewerId(req);
                 return ResponseEntity.ok().body(
                                 SuccessResponse.<List<CommentResponse>>builder()
                                                 .message("successfully getting the comment from the posts")
@@ -87,11 +87,4 @@ public class CommentController {
                                                 .data(null)
                                                 .build());
         }
-
-        private UUID getCurrent(HttpServletRequest request) {
-                SessionDataModel session = (SessionDataModel) request.getAttribute("session");
-
-                return session != null ? session.getId() : null;
-        }
-
 }

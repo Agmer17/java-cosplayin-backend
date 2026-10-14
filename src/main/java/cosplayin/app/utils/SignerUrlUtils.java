@@ -22,7 +22,7 @@ public class SignerUrlUtils {
     public String generateSignedUrl(String filePath, Duration ttl) {
         long expires = Instant.now().plus(ttl).getEpochSecond();
         String signature = sign(filePath, expires);
-        String signedUrl = String.format("/%s?expires=%d&sig=%s", filePath, expires, signature);
+        String signedUrl = String.format("%s?expires=%d&sig=%s", filePath, expires, signature);
         return signedUrl;
     }
 

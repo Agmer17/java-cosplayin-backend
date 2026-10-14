@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +16,7 @@ import cosplayin.app.profiles.model.dto.DetailProfileDTO;
 import cosplayin.app.profiles.model.dto.ProfileUpdateDto;
 import cosplayin.app.profiles.model.dto.SubmitOnBoardingRequests;
 import cosplayin.app.profiles.model.entity.Profiles;
+import cosplayin.app.profiles.repository.ProfileJdbcQuery;
 import cosplayin.app.profiles.repository.ProfilesRepository;
 import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.user.model.entity.Users;
@@ -34,6 +34,7 @@ public class ProfilesService {
         private final UsersService userService;
         private final StorageUtils storageUtils;
         private final ApplicationEventPublisher eventPublisher;
+        private final ProfileJdbcQuery profileJdbcQuery;
 
         private final String[] avatarFolder = { "user", "profiles", "avatar" };
         private final String[] bannerFolder = { "user", "profiles", "banner" };
@@ -50,14 +51,14 @@ public class ProfilesService {
         }
 
         public DetailProfileDTO getProfileDetails(UUID id) {
-                DetailProfileDTO profileDetail = profileRepository.findProfileDetailsById(id)
+                DetailProfileDTO profileDetail = profileJdbcQuery.findProfileDetailsById(id)
                                 .orElseThrow(() -> new NotFoundException("profile and users was not found"));
 
                 return profileDetail;
         }
 
         public DetailProfileDTO getProfileDetails(String username) {
-                DetailProfileDTO profileDetail = profileRepository.findProfileDetailsByUsername(username)
+                DetailProfileDTO profileDetail = profileJdbcQuery.findProfileDetailsByUsername(username)
                                 .orElseThrow(() -> new NotFoundException("profile and users was not found"));
 
                 return profileDetail;
@@ -88,7 +89,7 @@ public class ProfilesService {
                 userService.updateUsername(req.getUsername(), curr);
                 user.setStatus(UserStatus.ACTIVE);
 
-                DetailProfileDTO projection = profileRepository.findProfileDetailsById(curr)
+                DetailProfileDTO projection = profileJdbcQuery.findProfileDetailsById(curr)
                                 .orElseThrow(() -> new NotFoundException("your account was not found!"));
 
                 UsersCredentialUpdateEvent event = new UsersCredentialUpdateEvent(UserCredentials.builder()
@@ -161,13 +162,13 @@ public class ProfilesService {
         }
 
         public List<DetailProfileDTO> findRandomProfile(UUID curr) {
-                List<DetailProfileDTO> rand = profileRepository.findDiscoverProfiles(curr, PageRequest.of(0, 10));
+                List<DetailProfileDTO> rand = profileJdbcQuery.findDiscoverProfiles(curr, 0, 10);
 
                 return rand;
         }
 
         public List<DetailProfileDTO> searchByUsername(String query) {
-                List<DetailProfileDTO> results = profileRepository.searchProfiles(query);
+                List<DetailProfileDTO> results = profileJdbcQuery.searchProfiles(query);
 
                 return results;
         }
@@ -182,4 +183,13 @@ public class ProfilesService {
                 return profileRepository.findByUsername(username)
                                 .orElseThrow(() -> new NotFoundException(username + " profile's not found!"));
         }
+
+        public void increamnetFollower(UUID target) {
+                profileRepository.incrementProfilesFollowerCount(target);
+        }
+
+        public void decreamentFollower(UUID target) {
+                profileRepository.decreamentProfilesFollowerCount(target);
+        }
+
 }

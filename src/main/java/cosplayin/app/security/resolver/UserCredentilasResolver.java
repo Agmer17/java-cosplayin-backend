@@ -29,9 +29,6 @@ public class UserCredentilasResolver implements HandlerMethodArgumentResolver {
         }
 
         UserCredentials cred = (UserCredentials) credObj;
-        System.out.println("is there any cred object " + cred.getId());
-
-        System.out.println("CUURENT USER CREDENTIAL IN RESOLVER " + cred.getId());
 
         return cred;
 
