@@ -1,5 +1,9 @@
 package cosplayin.app.notification.model.type;
 
 public enum NotificationTypes {
-    FOLLOW, LIKES, NEW_POSTS
+    FOLLOW,
+    FOLLOW_REQUESTS,
+    POST_LIKES,
+    POST_COMMENT,
+    COMMENT_LIKE
 }

@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import cosplayin.app.followers.service.FollowerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,7 @@ public class PostsService {
         private final PostsJdbcDao postsQueryRepo;
 
         private final ProfilesService profilesService;
+        private final FollowerService followerService;
 
         private final StorageUtils storageUtils;
 
@@ -76,14 +78,12 @@ public class PostsService {
 
                 List<PostsMedia> media = IntStream.range(0, saved.size())
                                 .mapToObj(idx -> {
-                                        PostsMedia md = PostsMedia.builder()
-                                                        .posts(posts)
-                                                        .displayOrder(Short.valueOf(Integer.valueOf(idx).shortValue()))
-                                                        .mediaType(saved.get(idx).getFileType())
-                                                        .mediaUrl(saved.get(idx).getFilePath())
-                                                        .build();
-
-                                        return md;
+                                    return PostsMedia.builder()
+                                                    .posts(posts)
+                                                    .displayOrder(Integer.valueOf(idx).shortValue())
+                                                    .mediaType(saved.get(idx).getFileType())
+                                                    .mediaUrl(saved.get(idx).getFilePath())
+                                                    .build();
                                 }).toList();
 
                 postsRepository.save(posts);
@@ -99,30 +99,28 @@ public class PostsService {
                                 .build();
 
                 List<PostsMediaResponse> mediaResponses = media.stream().map(m -> {
-                        PostsMediaResponse resp = PostsMediaResponse.builder()
-                                        .mediaId(m.getId())
-                                        .mediaUrl(m.getMediaUrl())
-                                        .mediaType(m.getMediaType())
-                                        .displayOrder(m.getDisplayOrder())
-                                        .createdAt(m.getCreatedAt())
-                                        .build();
-                        return resp;
+                    return PostsMediaResponse.builder()
+                                    .mediaId(m.getId())
+                                    .mediaUrl(m.getMediaUrl())
+                                    .mediaType(m.getMediaType())
+                                    .displayOrder(m.getDisplayOrder())
+                                    .createdAt(m.getCreatedAt())
+                                    .build();
                 }).toList();
 
                 signMediaUrl(mediaResponses);
-                PostsResponse response = PostsResponse.builder()
-                                .postsId(posts.getId())
-                                .author(authorResponseDto)
-                                .caption(posts.getCaption())
-                                .status(postsStatus)
-                                .likeCount(0L)
-                                .bookmarkCount(0L)
-                                .shareCount(0L)
-                                .createdAt(posts.getCreatedAt())
-                                .media(mediaResponses)
-                                .build();
 
-                return response;
+            return PostsResponse.builder()
+                            .postsId(posts.getId())
+                            .author(authorResponseDto)
+                            .caption(posts.getCaption())
+                            .status(postsStatus)
+                            .likeCount(0L)
+                            .bookmarkCount(0L)
+                            .shareCount(0L)
+                            .createdAt(posts.getCreatedAt())
+                            .media(mediaResponses)
+                            .build();
         }
 
         public PostsResponse getPostsDetail(UUID postId, UUID curr) {
@@ -134,12 +132,11 @@ public class PostsService {
                 }
 
                 if (response.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
-                        // nanti lakuin pemeriksaan kalo fitur follow udah ada
+                        if (!followerService.isNotFollowedBy(curr, response.getAuthor().id())) {
+                                throw new ForbiddenAccessExceptions("this posts is private");
+                        }
                 }
 
-                // List<PostsMediaResponse> media = mediaRepository.findMediaByPostId(postId);
-
-                // response.setMedia(media);
 
                 signMediaUrl(response.getMedia());
 
@@ -181,7 +178,7 @@ public class PostsService {
 
                 List<PostsMedia> mediaToDelete = mediaRepository.findByPosts(posts);
 
-                List<String> deletedMediaPath = mediaToDelete.stream().map(m -> m.getMediaUrl()).toList();
+                List<String> deletedMediaPath = mediaToDelete.stream().map(PostsMedia::getMediaUrl).toList();
 
                 storageUtils.deletePrivateFile(deletedMediaPath);
 
@@ -194,7 +191,9 @@ public class PostsService {
                 Profiles profile = profilesService.getProfile(username);
 
                 if (profile.getVisibility().equals(ProfilesVisibility.PRIVATE)) {
-                        // do follow logic buatv cek udah saling follow belom
+                        if (followerService.isNotFollowedBy(curr, profile.getId())) {
+                                throw new ForbiddenAccessExceptions("this posts is private");
+                        }
                 }
 
                 List<PostsResponse> fromUsers = postsQueryRepo.findAllByUsername(username, 20, page, curr);

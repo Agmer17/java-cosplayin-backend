@@ -128,10 +128,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<jvmArguments>-XX:+UseCompactObjectHeaders</jvmArguments>
-					<!-- optional: keep existing lombok / other config if you already have any -->
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

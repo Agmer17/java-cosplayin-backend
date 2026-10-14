@@ -41,7 +41,7 @@ public class FollowersController {
                 FollowerResponse resp = service.createFollow(curr.getId(), targetId);
 
                 return ResponseEntity.ok().body(
-                                new SuccessResponse<FollowerResponse>("successfully following this users", resp));
+                        new SuccessResponse<>("successfully following this users", resp));
         }
 
         @DeleteMapping("/follow")
@@ -54,7 +54,7 @@ public class FollowersController {
                 service.deleteFollow(curr.getId(), targetId);
 
                 return ResponseEntity.ok().body(
-                                new SuccessResponse<Object>("successfully unfollowing this users", null));
+                        new SuccessResponse<>("successfully unfollowing this users", null));
         }
 
         @DeleteMapping("/follow-requests")
@@ -66,7 +66,7 @@ public class FollowersController {
 
                 service.deleteFollowRequests(curr.getId(), targetId);
                 return ResponseEntity.ok().body(
-                                new SuccessResponse<Object>("successfully cancel the follow requests", null));
+                        new SuccessResponse<>("successfully cancel the follow requests", null));
         }
 
         @GetMapping("/follow")
@@ -78,4 +78,13 @@ public class FollowersController {
                                                 targetId, GetOptionalCurrentUsers.getViewerId(request))));
         }
 
+
+        @GetMapping("/following")
+        public ResponseEntity<SuccessResponse<List<FollowerResponse>>> getFollowingFrom(
+                @PathVariable UUID targetId,
+                HttpServletRequest request) {
+                return ResponseEntity.ok().body(
+                        new SuccessResponse<>("successfully getting data", service.getFollowingFromUsers(
+                                targetId, GetOptionalCurrentUsers.getViewerId(request))));
+        }
 }

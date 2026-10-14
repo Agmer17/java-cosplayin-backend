@@ -3,6 +3,7 @@ package cosplayin.app.comments.service;
 import java.util.List;
 import java.util.UUID;
 
+import cosplayin.app.followers.service.FollowerService;
 import org.springframework.stereotype.Service;
 
 import cosplayin.app.comments.model.dto.CommentResponse;
@@ -31,6 +32,8 @@ public class PostsCommentService {
     private final PostsService postsService;
     private final PostsCommentRepository commentRepository;
     private final CommentJdbcQuery commentQuery;
+    private final FollowerService followerService;
+
 
     @Transactional
     public CommentResponse createComment(CreateCommentDto dto, UUID currentUser, UUID postId) {
@@ -59,10 +62,8 @@ public class PostsCommentService {
         commentRepository.saveAndFlush(comment);
         posts.setCommentCount(posts.getCommentCount() + 1);
 
-        CommentResponse saved = commentQuery.getByCommentId(comment.getId(), currentUser)
+        return commentQuery.getByCommentId(comment.getId(), currentUser)
                 .orElseThrow(() -> new NotFoundException("comment was not found!"));
-
-        return saved;
     }
 
     public List<CommentResponse> getCommentResponseFromPosts(UUID postsId, UUID curr) {
@@ -70,19 +71,16 @@ public class PostsCommentService {
         PostsResponse resp = postsService.getPostsDetail(postsId, null);
 
         if (resp.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
-            // do something
+            if (followerService.isNotFollowedBy(curr, resp.getAuthor().id())) {
+                throw new ForbiddenAccessExceptions("you cant comment on this posts");
+            }
         }
 
         return commentQuery.getCommentFromPosts(postsId, curr);
     }
 
     public List<CommentResponse> getReplyFromComment(UUID commentId, UUID curr) {
-
-        List<CommentResponse> response = commentQuery.getReplyFrom(commentId, curr);
-
-        System.out.println("JUMLAH HASIL : " + response.size());
-
-        return response;
+        return commentQuery.getReplyFrom(commentId, curr);
     }
 
     public void deleteComment(UUID commentId, UserCredentials cred) {
@@ -95,7 +93,7 @@ public class PostsCommentService {
         UUID postAuthorId = comment.getPostAuthorId();
 
         boolean canDelete = cred.getId().equals(commentAuthorId)
-                || postAuthorId.equals(postAuthorId)
+                || cred.getId().equals(postAuthorId) // <-- Sesuaikan dengan cred.getId()
                 || cred.getRole().equals(UserRoles.ADMIN)
                 || cred.getRole().equals(UserRoles.MODERATOR);
 

@@ -117,4 +117,12 @@ public class FollowerService {
     public List<FollowerResponse> getFollowerFromUsers(UUID target, UUID curr) {
         return followerQuery.findFollowerFrom(target, curr);
     }
+
+    public List<FollowerResponse> getFollowingFromUsers(UUID target, UUID curr) {
+        return followerQuery.findFollowingFrom(target, curr);
+    }
+
+    public boolean isNotFollowedBy(UUID requester, UUID target) {
+        return followerRepo.findByFollower_IdAndFollowing_Id(requester, target).isEmpty();
+    }
 }

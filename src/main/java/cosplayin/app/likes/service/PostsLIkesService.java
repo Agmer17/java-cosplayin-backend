@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
+import cosplayin.app.followers.service.FollowerService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,12 +31,12 @@ public class PostsLIkesService {
 
     private final PostsService postsService;
     private final ProfilesService profilesService;
+    private final FollowerService followerService;
 
     @Transactional
     public LocalDateTime createLike(UUID postsId, UUID userId) {
         Posts postsData = postsService.findEntityById(postsId);
 
-        System.out.println("DATA POSTS : " + postsData);
 
         Users user = Users.builder().id(userId).build();
 
@@ -63,20 +65,16 @@ public class PostsLIkesService {
         Profiles profile = profilesService.getProfile(username);
 
         if (profile.getVisibility().equals(ProfilesVisibility.PRIVATE)) {
-            // lakuin validasi nanti pas follow udah jadi
+                if (followerService.isNotFollowedBy(curr, profile.getId())) throw  new ForbiddenAccessExceptions("you cant access this");
         }
 
-        List<PostsResponse> data = postsService.findPostsDetailsInIds(likedPostsIds, curr);
-
-        return data;
+        return postsService.findPostsDetailsInIds(likedPostsIds, curr);
     }
 
     public List<PostsResponse> getLikedPostsFromUsers(UUID curr) {
         List<UUID> likedPostsIds = likesRepository.findLikedPostsIdsByUserId(curr);
 
-        List<PostsResponse> data = postsService.findPostsDetailsInIds(likedPostsIds, curr);
-
-        return data;
+        return postsService.findPostsDetailsInIds(likedPostsIds, curr);
     }
 
     @Transactional

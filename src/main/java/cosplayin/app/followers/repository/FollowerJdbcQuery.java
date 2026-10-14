@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -19,7 +18,7 @@ public class FollowerJdbcQuery {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final FollowerResponseMapper mapper;
-    private final String BASE_FOLLOWER_QUERY = """
+    private static final String BASE_FOLLOWER_QUERY = """
             SELECT
                 u.id              AS user_id,
                 p.display_name    AS display_name,
@@ -53,12 +52,22 @@ public class FollowerJdbcQuery {
         params.put("targetId", target);
         params.put("viewerId", viewerId);
 
-        try {
-            return jdbcTemplate.query(sql, params, mapper);
-        } catch (BadSqlGrammarException e) {
-            System.out.println("ERROR OCCURED : " + e.getCause().getMessage());
-            throw e;
-        }
+        return jdbcTemplate.query(sql, params, mapper);
     }
+
+
+    public List<FollowerResponse> findFollowingFrom(UUID target, UUID viewerId) {
+        String sql = BASE_FOLLOWER_QUERY.formatted("following_id")
+                + " WHERE f.follower_id = :targetId ORDER BY f.created_at DESC";
+
+        Map<String, Object> params = new HashMap<>();
+
+        params.put("targetId", target);
+        params.put("viewerId", viewerId);
+
+        return jdbcTemplate.query(sql, params, mapper);
+    }
+
+
 
 }
