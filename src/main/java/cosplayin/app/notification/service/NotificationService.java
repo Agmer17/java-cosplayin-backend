@@ -46,6 +46,7 @@ public class NotificationService {
                     .recipient(recipient)
                     .actorCount(1)
                     .posts(event.posts())
+                    .notificationType(NotificationType.POST_LIKE)
                     .build();
 
             notificationRepository.save(newNotif);
@@ -71,7 +72,7 @@ public class NotificationService {
             notif.setActorCount(notif.getActorCount() + 1);
         }
 
-        messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", event);
+        messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", NotificationType.POST_LIKE);
     }
 
 
