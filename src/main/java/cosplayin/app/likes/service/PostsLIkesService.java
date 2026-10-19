@@ -6,6 +6,9 @@ import java.util.UUID;
 
 import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
 import cosplayin.app.followers.service.FollowerService;
+import cosplayin.app.notification.event.PostsLikeEvent;
+import cosplayin.app.notification.event.RemovePostsLikeEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,8 @@ public class PostsLIkesService {
     private final ProfilesService profilesService;
     private final FollowerService followerService;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Transactional
     public LocalDateTime createLike(UUID postsId, UUID userId) {
         Posts postsData = postsService.findEntityById(postsId);
@@ -51,6 +56,7 @@ public class PostsLIkesService {
             throw new ResourceConflictExceptions("you already liked this posts");
         }
 
+        eventPublisher.publishEvent(new PostsLikeEvent(userId, postsData));
         postsData.setLikeCount(postsData.getLikeCount() + 1);
         return LocalDateTime.now();
     }
@@ -82,6 +88,7 @@ public class PostsLIkesService {
         PostsLikes likes = likesRepository.findByPosts_IdAndUser_Id(postsId, curr)
                 .orElseThrow(() -> new NotFoundException("likes data was not found"));
 
+        eventPublisher.publishEvent(new RemovePostsLikeEvent(likes.getPosts().getId(), curr));
         likes.getPosts().setLikeCount(likes.getPosts().getLikeCount() - 1);
         likesRepository.delete(likes);
     }

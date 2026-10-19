@@ -77,14 +77,12 @@ public class PostsService {
                                 .build();
 
                 List<PostsMedia> media = IntStream.range(0, saved.size())
-                                .mapToObj(idx -> {
-                                    return PostsMedia.builder()
-                                                    .posts(posts)
-                                                    .displayOrder(Integer.valueOf(idx).shortValue())
-                                                    .mediaType(saved.get(idx).getFileType())
-                                                    .mediaUrl(saved.get(idx).getFilePath())
-                                                    .build();
-                                }).toList();
+                                .mapToObj(idx -> PostsMedia.builder()
+                                                .posts(posts)
+                                                .displayOrder(Integer.valueOf(idx).shortValue())
+                                                .mediaType(saved.get(idx).getFileType())
+                                                .mediaUrl(saved.get(idx).getFilePath())
+                                                .build()).toList();
 
                 postsRepository.save(posts);
                 mediaRepository.saveAll(media);
@@ -233,5 +231,11 @@ public class PostsService {
                         String url = "private/" + med.getMediaUrl();
                         med.setMediaUrl(signer.generateSignedUrl(url, Duration.ofMinutes(5)));
                 });
+        }
+
+
+        public void decreamentCommentCount(UUID postsId, long decrementBy) {
+
+                postsRepository.decrementPostsCommentCount(postsId, decrementBy);
         }
 }

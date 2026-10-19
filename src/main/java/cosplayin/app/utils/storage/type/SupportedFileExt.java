@@ -5,6 +5,7 @@ public enum SupportedFileExt {
     JPEG("image/jpeg", SupportedFileType.IMAGE),
     PNG("image/png", SupportedFileType.IMAGE),
     WEBP("image/webp", SupportedFileType.IMAGE),
+    GIF("image/gif", SupportedFileType.IMAGE),
 
     MP4("video/mp4", SupportedFileType.VIDEO),
     WEBM("video/webm", SupportedFileType.VIDEO),

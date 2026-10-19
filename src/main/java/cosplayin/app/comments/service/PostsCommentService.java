@@ -83,6 +83,7 @@ public class PostsCommentService {
         return commentQuery.getReplyFrom(commentId, curr);
     }
 
+    @Transactional
     public void deleteComment(UUID commentId, UserCredentials cred) {
 
         DeleteCommentInfoProjection comment = commentRepository
@@ -93,7 +94,7 @@ public class PostsCommentService {
         UUID postAuthorId = comment.getPostAuthorId();
 
         boolean canDelete = cred.getId().equals(commentAuthorId)
-                || cred.getId().equals(postAuthorId) // <-- Sesuaikan dengan cred.getId()
+                || cred.getId().equals(postAuthorId)
                 || cred.getRole().equals(UserRoles.ADMIN)
                 || cred.getRole().equals(UserRoles.MODERATOR);
 
@@ -103,9 +104,17 @@ public class PostsCommentService {
 
         commentRepository.deleteById(commentId);
 
+        if (comment.getParentComment() != null) {
+           commentRepository.decrementParentReplyCount(comment.getParentComment());
+        }
+
+
+
+        postsService.decreamentCommentCount(comment.getPostsId(), commentRepository.countTheReplies(comment.getCommentId()) + 1);
     }
 
     public PostsComment getEntity(UUID id) {
         return commentRepository.findById(id).orElseThrow(() -> new NotFoundException("comments not found!"));
     }
+
 }

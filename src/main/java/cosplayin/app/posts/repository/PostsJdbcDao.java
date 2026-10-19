@@ -39,6 +39,7 @@ public class PostsJdbcDao {
                     p.bookmark_count,
                     p.share_count,
                     p.created_at,
+                    p.comment_count,
                     COALESCE(pm.media, '[]'::json) AS media,
                     EXISTS (
                         SELECT 1

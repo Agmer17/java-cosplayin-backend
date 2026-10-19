@@ -61,7 +61,8 @@ public class PostsComment {
 
     private String comment;
 
-    private Integer likeCount;
+    @Builder.Default
+    private Integer likeCount = 0;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
