@@ -28,7 +28,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "post_media", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_post_display_order", columnNames = { "post_id", "display_order" })
+        @UniqueConstraint(name = "uk_post_display_order", columnNames = { "posts_id", "display_order" })
 })
 @Getter
 @Setter

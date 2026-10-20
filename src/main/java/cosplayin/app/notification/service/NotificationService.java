@@ -3,11 +3,13 @@ package cosplayin.app.notification.service;
 
 import cosplayin.app.notification.event.PostsLikeEvent;
 import cosplayin.app.notification.event.RemovePostsLikeEvent;
+import cosplayin.app.notification.model.dto.NotificationResponse;
 import cosplayin.app.notification.model.entity.NotificationActor;
 import cosplayin.app.notification.model.entity.NotificationActorId;
 import cosplayin.app.notification.model.entity.Notifications;
 import cosplayin.app.notification.model.type.NotificationType;
 import cosplayin.app.notification.repository.NotificationActorRepository;
+import cosplayin.app.notification.repository.NotificationJdbcQuery;
 import cosplayin.app.notification.repository.NotificationRepository;
 import cosplayin.app.user.model.entity.Users;
 import lombok.NonNull;
@@ -25,9 +27,10 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationActorRepository actorRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationJdbcQuery notificationJdbcQuery;
 
     public String NotificationGroupKeyOf(@NonNull NotificationType type, @NonNull UUID targetId) {
-        return type.name() + ":" + targetId.toString();
+        return type.name() + ":" + targetId;
     }
 
 
@@ -58,6 +61,10 @@ public class NotificationService {
 
             actorRepository.save(notifActor);
 
+            Optional<NotificationResponse> response = notificationJdbcQuery.findById(newNotif.getId(), recipient.getId());
+
+            response.ifPresent(notificationResponse -> messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", notificationResponse));
+
 
         } else {
             NotificationActor notifActor = NotificationActor.builder()
@@ -70,9 +77,13 @@ public class NotificationService {
             Notifications notif = existed.get();
 
             notif.setActorCount(notif.getActorCount() + 1);
+
+            Optional<NotificationResponse> response = notificationJdbcQuery.findById(existed.get().getId(), recipient.getId());
+//            response.ifPresent(notificationResponse -> messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", notificationResponse));
         }
 
-        messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", NotificationType.POST_LIKE);
+
+
     }
 
 
@@ -89,5 +100,7 @@ public class NotificationService {
 
         notif.get().setActorCount(notif.get().getActorCount() - 1);
     }
+
+
 
 }

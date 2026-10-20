@@ -28,13 +28,15 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     }
 
 
-    @Override
+   @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/api/ws")
-                    .setAllowedOriginPatterns("http://localhost:3000", "http://192.168.1.8:3000")
-                    .addInterceptors(handshakeFilterInterceptor)
-                    .setHandshakeHandler(customPrincipalHandler);
-    }
+    registry.addEndpoint("/api/ws")
+            .setAllowedOriginPatterns("http://localhost:3000",
+                        "https://pqqs6v5w-3000.asse.devtunnels.ms")
+            .addInterceptors(handshakeFilterInterceptor)
+
+            .setHandshakeHandler(customPrincipalHandler);
+}
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {

@@ -54,7 +54,7 @@ public class AuthController {
 
                 return ResponseEntity
                                 .status(HttpStatus.FOUND)
-                                .location(URI.create("http://localhost:3000/"))
+                                .location(URI.create("https://pqqs6v5w-3000.asse.devtunnels.ms/"))
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                                 .build();
         }
@@ -73,7 +73,7 @@ public class AuthController {
 
                 return ResponseEntity
                                 .status(HttpStatus.FOUND)
-                                .location(URI.create("http://localhost:3000/"))
+                                .location(URI.create("https://pqqs6v5w-3000.asse.devtunnels.ms/"))
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                                 .build();
         }

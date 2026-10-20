@@ -29,7 +29,7 @@ public class SpringWebConfiguration implements WebMvcConfigurer {
                         "/js/**",
                         "/images/**",
                         "/favicon.ico");
-        ;
+
     }
 
     @Override
@@ -43,13 +43,13 @@ public class SpringWebConfiguration implements WebMvcConfigurer {
                 .addResourceLocations("file:uploads/public/");
     }
 
-    @Override
+   @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "http://192.168.1.8:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
-    }
+    registry.addMapping("/**")
+            .allowedOriginPatterns("http://localhost:3000", "https://pqqs6v5w-3000.asse.devtunnels.ms")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+            .allowedHeaders("*")
+            .allowCredentials(true)
+            .maxAge(3600);
+}
 }
