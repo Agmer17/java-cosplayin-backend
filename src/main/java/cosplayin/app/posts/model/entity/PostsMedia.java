@@ -42,7 +42,6 @@ public class PostsMedia {
     private UUID id;
 
     private String mediaUrl;
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private SupportedFileType mediaType;

@@ -66,5 +66,4 @@ public class PostsComment {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
-
 }

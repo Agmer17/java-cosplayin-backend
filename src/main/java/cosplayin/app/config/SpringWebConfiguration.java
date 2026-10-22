@@ -46,7 +46,7 @@ public class SpringWebConfiguration implements WebMvcConfigurer {
    @Override
     public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
-            .allowedOriginPatterns("http://localhost:3000", "https://pqqs6v5w-3000.asse.devtunnels.ms")
+            .allowedOriginPatterns("http://localhost:3000", "http://192.168.1.12:3000")
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             .allowedHeaders("*")
             .allowCredentials(true)

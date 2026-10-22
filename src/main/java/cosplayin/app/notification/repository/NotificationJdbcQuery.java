@@ -56,12 +56,8 @@ public class NotificationJdbcQuery {
             ) a ON TRUE
             """;
 
-    private static final String SQL_LIST = BASE_SELECT + """
+    private static final String SQL_LIST_RECIPIENT = BASE_SELECT + """
             WHERE n.recipient_id = :recipientId
-              AND (CAST(:cursorTime AS timestamp) IS NULL
-                   OR (n.last_activity_at, n.id) < (CAST(:cursorTime AS timestamp), CAST(:cursorId AS uuid)))
-            ORDER BY n.last_activity_at DESC, n.id DESC
-            LIMIT :limit
             """;
 
     private static final String SQL_BY_ID = BASE_SELECT + """
@@ -73,15 +69,12 @@ public class NotificationJdbcQuery {
     private final NotificationResponseMapper rowMapper;
 
     public List<NotificationResponse> findByRecipient(
-            UUID recipientId, LocalDateTime cursorTime, UUID cursorId, int limit) {
+            UUID recipientId) {
 
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("recipientId", recipientId)
-                .addValue("cursorTime", cursorTime, Types.TIMESTAMP)
-                .addValue("cursorId", cursorId, Types.OTHER)
-                .addValue("limit", limit);
+                .addValue("recipientId", recipientId);
 
-        return jdbc.query(SQL_LIST, params, rowMapper);
+        return jdbc.query(SQL_LIST_RECIPIENT, params, rowMapper);
     }
 
     public Optional<NotificationResponse> findById(UUID notificationId, UUID recipientId) {

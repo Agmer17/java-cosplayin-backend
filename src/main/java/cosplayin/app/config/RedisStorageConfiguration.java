@@ -42,6 +42,8 @@ public class RedisStorageConfiguration {
                 template.setValueSerializer(serializer);
                 template.setHashValueSerializer(serializer);
                 template.afterPropertiesSet();
+
+
                 return template;
         }
 

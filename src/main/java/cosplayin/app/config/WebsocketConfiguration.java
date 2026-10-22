@@ -32,7 +32,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/api/ws")
             .setAllowedOriginPatterns("http://localhost:3000",
-                        "https://pqqs6v5w-3000.asse.devtunnels.ms")
+                        "http://192.168.1.12:3000")
             .addInterceptors(handshakeFilterInterceptor)
 
             .setHandshakeHandler(customPrincipalHandler);

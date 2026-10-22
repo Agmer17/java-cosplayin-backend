@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.UUID;
 
 import cosplayin.app.followers.service.FollowerService;
+import cosplayin.app.notification.event.PostsCommentNotificationEvent;
+import cosplayin.app.notification.event.PostsCommentRepliesNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import cosplayin.app.comments.model.dto.CommentResponse;
@@ -34,10 +37,23 @@ public class PostsCommentService {
     private final CommentJdbcQuery commentQuery;
     private final FollowerService followerService;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+
 
     @Transactional
     public CommentResponse createComment(CreateCommentDto dto, UUID currentUser, UUID postId) {
-        Posts posts = postsService.findEntityById(postId);
+
+        PostsResponse posts = postsService.getPostsDetail(postId, currentUser);
+
+        boolean isReply = false;
+
+        if (posts.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
+            if (followerService.isNotFollowedBy(currentUser, posts.getAuthor().id())) {
+                throw new ForbiddenAccessExceptions("you cant comment on this posts");
+            }
+        }
+
 
         if (posts.getCommentAvailability().equals(PostsCommentStatus.NOT_AVAIBLE)) {
             throw new ForbiddenAccessExceptions("you can't comment on this posts, the author disable it");
@@ -49,11 +65,14 @@ public class PostsCommentService {
             parentComment = commentRepository.findById(dto.getReplyTo())
                     .orElseThrow(() -> new NotFoundException("comment parent not found"));
             parentComment.setReplyCount(parentComment.getReplyCount() + 1);
+
+            isReply = true;
         }
+
 
         PostsComment comment = PostsComment.builder()
                 .user(Users.builder().id(currentUser).build())
-                .posts(posts)
+                .posts(Posts.builder().id(posts.getPostsId()).build())
                 .comment(dto.getComment())
                 .parentComment(parentComment)
                 .likeCount(0)
@@ -62,13 +81,31 @@ public class PostsCommentService {
         commentRepository.saveAndFlush(comment);
         posts.setCommentCount(posts.getCommentCount() + 1);
 
+
+        if (isReply) {
+            eventPublisher.publishEvent(PostsCommentRepliesNotificationEvent.builder()
+                    .actorId(currentUser)
+                    .commentId(comment.getId())
+                    .recipient(posts.getAuthor().id())
+                    .build());
+
+        } else {
+            eventPublisher.publishEvent(PostsCommentNotificationEvent.builder()
+                    .postsId(postId)
+                    .actorId(currentUser)
+                    .commentId(comment.getId())
+                    .recipient(posts.getAuthor().id())
+                    .build());
+        }
+
+
         return commentQuery.getByCommentId(comment.getId(), currentUser)
                 .orElseThrow(() -> new NotFoundException("comment was not found!"));
     }
 
     public List<CommentResponse> getCommentResponseFromPosts(UUID postsId, UUID curr) {
 
-        PostsResponse resp = postsService.getPostsDetail(postsId, null);
+        PostsResponse resp = postsService.getPostsDetail(postsId, curr);
 
         if (resp.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
             if (followerService.isNotFollowedBy(curr, resp.getAuthor().id())) {

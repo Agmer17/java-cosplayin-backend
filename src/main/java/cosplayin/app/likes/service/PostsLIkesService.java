@@ -7,7 +7,6 @@ import java.util.UUID;
 import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
 import cosplayin.app.followers.service.FollowerService;
 import cosplayin.app.notification.event.PostsLikeEvent;
-import cosplayin.app.notification.event.RemovePostsLikeEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -88,7 +87,6 @@ public class PostsLIkesService {
         PostsLikes likes = likesRepository.findByPosts_IdAndUser_Id(postsId, curr)
                 .orElseThrow(() -> new NotFoundException("likes data was not found"));
 
-        eventPublisher.publishEvent(new RemovePostsLikeEvent(likes.getPosts().getId(), curr));
         likes.getPosts().setLikeCount(likes.getPosts().getLikeCount() - 1);
         likesRepository.delete(likes);
     }
