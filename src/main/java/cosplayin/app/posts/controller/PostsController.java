@@ -145,37 +145,4 @@ public class PostsController {
 
         }
 
-        @GetMapping("/uploads/private/posts/media/{filename}")
-        public ResponseEntity<Resource> getMethodName(@RequestParam String expires,
-                        @RequestParam String sig,
-                        @PathVariable String filename) {
-
-                if (!signer.isValid("private/posts/media/" + filename, Long.parseLong(expires), sig)) {
-                        throw new ForbiddenAccessExceptions("you can't access this posts media!");
-                }
-                String strPath = "uploads/private/posts/media/" + filename;
-                Path path = Paths.get(strPath);
-
-                Resource resource = new FileSystemResource(path);
-
-                if (!resource.exists()) {
-                        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-                }
-
-                String contentType;
-                try {
-                        contentType = Files.probeContentType(path);
-                } catch (IOException e) {
-                        contentType = null;
-                }
-
-                MediaType mediaType = contentType != null
-                                ? MediaType.parseMediaType(contentType)
-                                : MediaType.APPLICATION_OCTET_STREAM;
-
-                return ResponseEntity.ok()
-                                .contentType(mediaType)
-                                .body(resource);
-        }
-
 }

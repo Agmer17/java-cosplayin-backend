@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import cosplayin.app.followers.service.FollowerService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,9 @@ public class PostsService {
         private final StorageUtils storageUtils;
 
         private final SignerUrlUtils signer;
+
+        @Value("${storage.s3.bucket.private}")
+        private String privateBucket;
 
         @Transactional
         public PostsResponse createPosts(CreatePostsDTO dto, UUID curr) {
@@ -228,8 +232,7 @@ public class PostsService {
 
         private void signMediaUrl(List<PostsMediaResponse> data) {
                 data.forEach(med -> {
-                        String url = "private/" + med.getMediaUrl();
-                        med.setMediaUrl(signer.generateSignedUrl(url, Duration.ofMinutes(5)));
+                        med.setMediaUrl(signer.sign(privateBucket, med.getMediaUrl(), Duration.ofMinutes(5)));
                 });
         }
 

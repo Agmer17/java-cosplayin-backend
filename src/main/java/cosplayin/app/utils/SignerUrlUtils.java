@@ -1,50 +1,32 @@
 package cosplayin.app.utils;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Base64;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Component
+@RequiredArgsConstructor
 public class SignerUrlUtils {
 
-    @Value("${MEDIA_ACCESS_SECRET}")
-    private String secretKey;
+    private final S3Presigner presigner;
 
-    // filepath should be on of public/private
-    public String generateSignedUrl(String filePath, Duration ttl) {
-        long expires = Instant.now().plus(ttl).getEpochSecond();
-        String signature = sign(filePath, expires);
-        String signedUrl = String.format("%s?expires=%d&sig=%s", filePath, expires, signature);
-        return signedUrl;
-    }
 
-    public boolean isValid(String filePath, long expires, String signature) {
-        if (Instant.now().getEpochSecond() > expires) {
-            return false;
-        }
-        String expectedSig = sign(filePath, expires);
-        return MessageDigest.isEqual(
-                expectedSig.getBytes(StandardCharsets.UTF_8),
-                signature.getBytes(StandardCharsets.UTF_8));
-    }
+    public String sign(String bucket,String key, Duration ttl) {
+        GetObjectRequest getReq = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
 
-    private String sign(String filePath, long expires) {
-        try {
-            String payload = filePath + ":" + expires;
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to sign URL", e);
-        }
+        GetObjectPresignRequest presignReq = GetObjectPresignRequest.builder()
+                .signatureDuration(ttl)
+                .getObjectRequest(getReq)
+                .build();
+
+        return presigner.presignGetObject(presignReq).url().toString();
     }
 }
