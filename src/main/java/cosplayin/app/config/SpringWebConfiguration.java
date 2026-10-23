@@ -2,6 +2,7 @@ package cosplayin.app.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -18,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 public class SpringWebConfiguration implements WebMvcConfigurer {
     private final AuthHydrationFilter hydrationFilter;
     private final UserCredentilasResolver credentilasResolver;
+
+    @Value("${frontend.host.url}")
+    private String frontendHosts;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -46,7 +50,7 @@ public class SpringWebConfiguration implements WebMvcConfigurer {
    @Override
     public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
-            .allowedOriginPatterns("http://localhost:3000", "http://192.168.1.12:3000")
+            .allowedOriginPatterns(this.frontendHosts)
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             .allowedHeaders("*")
             .allowCredentials(true)

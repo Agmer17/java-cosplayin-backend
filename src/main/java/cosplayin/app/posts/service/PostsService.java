@@ -235,7 +235,10 @@ public class PostsService {
 
 
         public void decreamentCommentCount(UUID postsId, long decrementBy) {
-
                 postsRepository.decrementPostsCommentCount(postsId, decrementBy);
+        }
+
+        public void increamentCommentCount(UUID postsId) {
+                Posts posts = postsRepository.findById(postsId).orElseThrow(() -> new NotFoundException("posts was not found"));
         }
 }

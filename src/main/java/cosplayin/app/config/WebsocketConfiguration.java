@@ -3,6 +3,7 @@ package cosplayin.app.config;
 import cosplayin.app.websocket.filter.WebsocketHandshakeFilter;
 import cosplayin.app.websocket.filter.WebsocketHandshakeHandler;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
@@ -18,6 +19,9 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     private final WebsocketHandshakeHandler customPrincipalHandler;
     private final TaskScheduler scheduler;
 
+    @Value("${frontend.host.url}")
+    private String frontendHosts;
+
     public WebsocketConfiguration(
             WebsocketHandshakeFilter handshakeFilterInterceptor,
             WebsocketHandshakeHandler customPrincipalHandler,
@@ -31,8 +35,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
    @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/api/ws")
-            .setAllowedOriginPatterns("http://localhost:3000",
-                        "http://192.168.1.12:3000")
+            .setAllowedOriginPatterns(this.frontendHosts)
             .addInterceptors(handshakeFilterInterceptor)
 
             .setHandshakeHandler(customPrincipalHandler);

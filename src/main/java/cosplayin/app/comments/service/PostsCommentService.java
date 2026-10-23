@@ -79,7 +79,7 @@ public class PostsCommentService {
                 .build();
 
         commentRepository.saveAndFlush(comment);
-        posts.setCommentCount(posts.getCommentCount() + 1);
+        postsService.increamentCommentCount(posts.getPostsId());
 
 
         if (isReply) {

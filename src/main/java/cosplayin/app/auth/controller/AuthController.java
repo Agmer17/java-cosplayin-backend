@@ -1,5 +1,6 @@
 package cosplayin.app.auth.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AuthController {
         private final AuthService authService;
 
+        @Value("${frontend.host.url}")
+        private String frontendHostUrl;
+
+        @Value("${app.domain}")
+        private String appDomain;
+
         @GetMapping("/login/google")
         public ResponseEntity<Void> getLoginGoogleUrl() {
                 return ResponseEntity
@@ -46,15 +53,16 @@ public class AuthController {
 
                 ResponseCookie cookie = ResponseCookie.from("access_token", accessToken)
                                 .httpOnly(true)
-                                .secure(false)
+                                .secure(true)
                                 .path("/")
+                                .domain(this.appDomain)
                                 .maxAge(604800)
                                 .sameSite("lax")
                                 .build();
 
                 return ResponseEntity
                                 .status(HttpStatus.FOUND)
-                                .location(URI.create("http://192.168.1.12:3000"))
+                                .location(URI.create(this.frontendHostUrl))
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                                 .build();
         }
@@ -65,15 +73,16 @@ public class AuthController {
 
                 ResponseCookie cookie = ResponseCookie.from("access_token", accessToken)
                                 .httpOnly(true)
-                                .secure(false)
+                                .secure(true)
                                 .path("/")
                                 .maxAge(604800)
+                                .domain(this.appDomain)
                                 .sameSite("lax")
                                 .build();
 
                 return ResponseEntity
                                 .status(HttpStatus.FOUND)
-                                .location(URI.create("http://192.168.1.12:3000"))
+                                .location(URI.create(this.frontendHostUrl))
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                                 .build();
         }
@@ -85,9 +94,10 @@ public class AuthController {
                 authService.logoutUser(token);
                 ResponseCookie cookie = ResponseCookie.from("access_token", "")
                                 .httpOnly(true)
-                                .secure(false)
+                                .secure(true)
                                 .path("/")
                                 .maxAge(0)
+                                .domain(this.appDomain)
                                 .sameSite("lax")
                                 .build();
 

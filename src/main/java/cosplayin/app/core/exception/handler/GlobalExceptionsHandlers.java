@@ -3,6 +3,9 @@ package cosplayin.app.core.exception.handler;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -11,6 +14,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -124,6 +128,11 @@ public class GlobalExceptionsHandlers {
                                                 .error(ex.getMessage())
                                                 .timestamp(Instant.now())
                                                 .build());
+        }
+
+        @ExceptionHandler({ClientAbortException.class, AsyncRequestNotUsableException.class})
+        public void handleClientAbort(Exception ex, HttpServletResponse response) {
+                System.out.println("Client aborted request: " + ex.getMessage());
         }
 
         @ExceptionHandler(Exception.class)

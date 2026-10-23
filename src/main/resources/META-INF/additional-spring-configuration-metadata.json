@@ -2,11 +2,26 @@
   {
     "name": "GOOGLE_CLIENT_ID",
     "type": "java.lang.String",
-    "description": "CLIENT ID BUAT OAUTH GOOGLE"
+    "description": "CLIENT ID BUAT OAUTH GOOGLE."
   },
   {
     "name": "GOOGLE_CLIENT_SECRET",
     "type": "java.lang.String",
-    "description": "OAUTH SECRET FOR GOOGLE RESOURCE SERVER"
+    "description": "OAUTH SECRET FOR GOOGLE RESOURCE SERVER."
+  },
+  {
+    "name": "frontend.host.url",
+    "type": "java.lang.String",
+    "description": "Value for redirecting after the OAuth verification."
+  },
+  {
+    "name" : "app.domain",
+    "type": "java.lang.String",
+    "description": "vurrent backend app domain."
+  },
+  {
+    "name" : "backend.host",
+    "type": "java.lang.String",
+    "description": "the hosts of the springboot application."
   }
 ]}

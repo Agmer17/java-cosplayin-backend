@@ -27,9 +27,12 @@ public class UtilsConfig {
     @Value("${DISCORD_CLIENT_SECRET}")
     private String discordClientSecret;
 
+    @Value("${backend.host}")
+    private String backendHostPrefix;
+
     @Bean("googleOauth")
     OAuth20Service googleOauthService() {
-        String googleCallbackUrl = "https://margin-trance-musty.ngrok-free.dev/api/auth/google";
+        String googleCallbackUrl = this.backendHostPrefix + "/api/auth/google";
         return new ServiceBuilder(googleClientId)
                 .apiSecret(googleClientSecret)
                 .defaultScope("email profile")
@@ -39,7 +42,7 @@ public class UtilsConfig {
 
     @Bean("discordOauth")
     OAuth20Service discordOauthSevice() {
-        String discordOauthCallback = "https://margin-trance-musty.ngrok-free.dev/api/auth/discord";
+        String discordOauthCallback = this.backendHostPrefix + "/api/auth/discord";
         return new ServiceBuilder(discordClientId)
                 .apiSecret(discordClientSecret)
                 .defaultScope("identify email openid")
