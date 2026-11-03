@@ -39,4 +39,6 @@ public interface StorageUtils {
 
     List<SupportedFileExt> validateFile(List<MultipartFile> file, FileValidationPolicy policy);
 
+    String signPublicFileUrl(String path);
+
 }

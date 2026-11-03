@@ -2,14 +2,13 @@ package cosplayin.app.notification.repository;
 
 import cosplayin.app.notification.model.dto.NotificationResponse;
 import cosplayin.app.notification.model.mapper.NotificationResponseMapper;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Types;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +16,8 @@ import java.util.UUID;
 @Repository
 @RequiredArgsConstructor
 public class NotificationJdbcQuery {
+
+
 
     private static final String BASE_SELECT = """
             SELECT n.id,
@@ -27,6 +28,7 @@ public class NotificationJdbcQuery {
                    n.read_at,
                    n.post_id,
                    pm.media_url                    AS post_thumbnail,
+                   pm.media_type                   AS media_type,
                    c.id                            AS comment_id,
                    c.comment                       AS comment_text,
                    c.created_at                    AS comment_created_at,

@@ -26,6 +26,15 @@ public interface ProfilesRepository extends JpaRepository<Profiles, UUID> {
             """)
     void incrementProfilesFollowerCount(@Param("userId") UUID userId);
 
+
+    @Modifying
+    @Query("""
+            update Profiles p
+            set p.followingCount = p.followingCount + 1
+            where p.id = :userId
+            """)
+    void incrementProfileFollowingCount(@Param("userId") UUID userId);
+
     @Modifying
     @Query("""
             update Profiles p
@@ -33,5 +42,14 @@ public interface ProfilesRepository extends JpaRepository<Profiles, UUID> {
             where p.id = :userId
             """)
     void decreamentProfilesFollowerCount(@Param("userId") UUID userId);
+
+
+    @Modifying
+    @Query("""
+            update Profiles p
+            set p.followingCount = p.followingCount - 1
+            where p.id = :userId
+            """)
+    void decreamentProfilesFollowingCount(@Param("userId") UUID userId);
 
 }

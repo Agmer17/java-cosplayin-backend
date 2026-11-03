@@ -21,7 +21,7 @@ public class ProfileJdbcQuery {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     private final String DETAIL_PROFILE_QUERY = """
-            SELECT
+        SELECT
             u.id,
             p.display_name,
             p.bio,
@@ -32,10 +32,30 @@ public class ProfileJdbcQuery {
             u.username,
             u.status,
             u.role,
-            p.gender
-            FROM profiles p
-            JOIN users u ON u.id = p.id
-            """;
+            p.gender,
+            p.following_count,
+            CASE
+                WHEN CAST(:currentUserId AS UUID) IS NULL
+                    THEN 'NONE'
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM followers f
+                    WHERE f.follower_id = CAST(:currentUserId AS UUID)
+                      AND f.following_id = u.id
+                )
+                    THEN 'FOLLOWING'
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM follow_requests fr
+                    WHERE fr.requester_id = CAST(:currentUserId AS UUID)
+                      AND fr.target_id = u.id
+                )
+                    THEN 'REQUESTED'
+                ELSE 'NONE'
+            END AS follow_status
+        FROM profiles p
+        JOIN users u ON u.id = p.id
+        """;
 
     private final DetailProfileMapper mapper;
 
@@ -47,6 +67,8 @@ public class ProfileJdbcQuery {
         Map<String, Object> params = new HashMap<>();
 
         params.put("id", id);
+        params.put("currentUserId", null);
+
 
         try {
             return Optional.ofNullable(
@@ -58,7 +80,7 @@ public class ProfileJdbcQuery {
 
     }
 
-    public Optional<DetailProfileDTO> findProfileDetailsByUsername(String username) {
+    public Optional<DetailProfileDTO> findProfileDetailsByUsername(String username, UUID curr) {
         String sql = DETAIL_PROFILE_QUERY + """
                 WHERE u.username = :username
                 """;
@@ -66,6 +88,8 @@ public class ProfileJdbcQuery {
         Map<String, Object> params = new HashMap<>();
 
         params.put("username", username);
+        params.put("currentUserId", curr);
+
 
         try {
             return Optional.ofNullable(
@@ -102,6 +126,7 @@ public class ProfileJdbcQuery {
         Map<String, Object> params = new HashMap<>();
 
         params.put("query", query);
+        params.put("currentUserId", null);
 
         return jdbcTemplate.query(sql, params, mapper);
     }

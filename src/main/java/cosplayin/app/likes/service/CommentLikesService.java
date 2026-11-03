@@ -3,6 +3,8 @@ package cosplayin.app.likes.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import cosplayin.app.notification.event.PostCommentLikeNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,9 @@ public class CommentLikesService {
     private final PostsCommentService commentService;
     private final CommentLikesRepository commentLikeRepo;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+
     @Transactional
     public LocalDateTime createCommentsLike(UUID curr, UUID commentId) {
         PostsComment comment = commentService.getEntity(commentId);
@@ -36,6 +41,8 @@ public class CommentLikesService {
         } catch (DataIntegrityViolationException e) {
             throw new ResourceConflictExceptions("you already liked this posts!");
         }
+
+        eventPublisher.publishEvent(new PostCommentLikeNotificationEvent(commentId, curr, comment.getUser().getId()));
 
         return LocalDateTime.now();
     }

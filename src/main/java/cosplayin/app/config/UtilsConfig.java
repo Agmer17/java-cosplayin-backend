@@ -1,6 +1,8 @@
 package cosplayin.app.config;
 
 import org.apache.tika.Tika;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,5 +60,12 @@ public class UtilsConfig {
     @Bean
     Tika tika() {
         return new Tika();
+
+    }
+
+
+    @Bean
+    GeometryFactory geometryFactory() {
+        return new GeometryFactory(new PrecisionModel(), 4326);
     }
 }

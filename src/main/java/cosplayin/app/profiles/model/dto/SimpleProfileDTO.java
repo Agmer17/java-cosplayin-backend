@@ -3,6 +3,7 @@ package cosplayin.app.profiles.model.dto;
 import java.util.UUID;
 
 import cosplayin.app.core.authorization.UserRoles;
+import cosplayin.app.followers.model.type.FollowStatus;
 import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import lombok.Builder;
 import tools.jackson.databind.PropertyNamingStrategies;
@@ -16,6 +17,7 @@ public record SimpleProfileDTO(
         String avatarUrl,
         ProfilesVisibility visibility,
         String username,
-        UserRoles userRole) {
+        UserRoles userRole
+) {
 
 }

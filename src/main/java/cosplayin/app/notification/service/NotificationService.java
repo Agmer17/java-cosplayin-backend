@@ -18,6 +18,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +30,7 @@ public class NotificationService {
     private final NotificationActorRepository actorRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationJdbcQuery notificationJdbcQuery;
+
 
     public String NotificationGroupKeyOf(@NonNull NotificationType type, @NonNull UUID targetId) {
         return type.name() + ":" + targetId;
@@ -63,6 +65,7 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
         Notifications notif = existed.get();
 
         notif.setActorCount(notif.getActorCount() + 1);
+        notif.setLastActivityAt(LocalDateTime.now());
 
         Optional<NotificationResponse> response = notificationJdbcQuery.findById(existed.get().getId(), recipient.getId());
         response.ifPresent(notificationResponse -> messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", notificationResponse));
@@ -217,6 +220,12 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
     public List<NotificationResponse> getNotificationFromUsers(UUID userId) {
             return notificationJdbcQuery.findByRecipient(userId);
 
+    }
+
+
+    @Transactional
+    public void readAllNotification(UUID curr) {
+        notificationRepository.markAsRead(curr, LocalDateTime.now());
     }
 
 }

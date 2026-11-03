@@ -80,6 +80,7 @@ public class FollowerService {
             try {
                 followerRepo.saveAndFlush(follow);
                 profilesService.increamnetFollower(target);
+                profilesService.increamentFollowing(curr);
 
             } catch (DataIntegrityViolationException e) {
                 throw new ResourceConflictExceptions("you've already follow this person");
@@ -105,6 +106,8 @@ public class FollowerService {
                 .orElseThrow(() -> new NotFoundException("you're not following this person!"));
         followerRepo.delete(follow);
         profilesService.decreamentFollower(target);
+        profilesService.decreamentFollowing(target);
+        
     }
 
     @Transactional

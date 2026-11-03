@@ -86,7 +86,7 @@ public class PostsCommentService {
             eventPublisher.publishEvent(PostsCommentRepliesNotificationEvent.builder()
                     .actorId(currentUser)
                     .commentId(comment.getId())
-                    .recipient(posts.getAuthor().id())
+                    .recipient(parentComment.getUser().getId())
                     .build());
 
         } else {

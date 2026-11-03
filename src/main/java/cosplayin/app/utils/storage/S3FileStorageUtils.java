@@ -32,12 +32,18 @@ public class S3FileStorageUtils  implements StorageUtils{
     @Value("${storage.s3.bucket.private}")
     private String privateBucket;
 
-    @Value("${storage.s3.bucket.private}")
+    @Value("${storage.s3.bucket.public}")
     private String publicBucket;
 
     private final S3Client client;
 
     private final MimeTypeResolver mimeTypeResolver;
+
+    @Value("${storage.s3.endpoint}")
+    private String s3StorageEndpoint;
+
+    @Value("${storage.s3.bucket.public}")
+    private String publicReadBucket;
 
     @Override
     public FileModel saveFile(String bucket, MultipartFile filehader, SupportedFileExt extension, String... paths) {
@@ -45,11 +51,17 @@ public class S3FileStorageUtils  implements StorageUtils{
 
         String relativePath = String.join("/", paths) + "/" + filename;
 
+
+
+
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(relativePath)
                 .contentType(extension.getMimeType())
                 .contentLength(filehader.getSize())
+                .acl(bucket.equals(this.privateBucket)
+                        ? ObjectCannedACL.PRIVATE
+                        : ObjectCannedACL.PUBLIC_READ)
                 .build();
         try {
             client.putObject(putObjectRequest, RequestBody.fromInputStream(filehader.getInputStream(), filehader.getSize()));
@@ -235,5 +247,10 @@ public class S3FileStorageUtils  implements StorageUtils{
         }
 
         return ext;
+    }
+
+    @Override
+    public String signPublicFileUrl(String key) {
+        return this.s3StorageEndpoint + "/" + this.publicReadBucket + "/" + key;
     }
 }

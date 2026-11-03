@@ -31,4 +31,16 @@ public class NotificationController {
              new SuccessResponse<>("successfully getting your notifications", notificationService.getNotificationFromUsers(curr.getId()))
      );
     }
+
+
+    @GetMapping("/read-all")
+    @RequireAuth
+    public ResponseEntity<SuccessResponse<Object>> handleMarkAsReadAll(
+            @CurrentUser UserCredentials cred
+    ) {
+        notificationService.readAllNotification(cred.getId());
+        return ResponseEntity.ok().body(
+                new SuccessResponse<>("successfully read all messages", null)
+        );
+    }
 }

@@ -23,4 +23,14 @@ public interface PostsRepository extends JpaRepository<Posts, UUID> {
             @Param("count") long count
     );
 
+    @Modifying
+    @Query("""
+    UPDATE Posts p
+    SET p.commentCount = p.commentCount + 1
+    WHERE p.id = :postsId
+    """)
+    void increamentPostsCommentCount(
+            @Param("postsId") UUID postsId
+    );
+
 }

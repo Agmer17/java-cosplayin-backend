@@ -9,6 +9,7 @@ import java.util.UUID;
 @Embeddable
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class NotificationActorId {
     @Column(nullable = false)
     private UUID notificationId;

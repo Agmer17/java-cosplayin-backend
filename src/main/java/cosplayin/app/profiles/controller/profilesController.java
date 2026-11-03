@@ -1,5 +1,7 @@
 package cosplayin.app.profiles.controller;
 
+import cosplayin.app.utils.GetOptionalCurrentUsers;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,12 +48,13 @@ public class profilesController {
         }
 
         @GetMapping("/u/{username}")
-        public ResponseEntity<SuccessResponse<DetailProfileDTO>> getUsersProfiles(@PathVariable String username) {
+        public ResponseEntity<SuccessResponse<DetailProfileDTO>> getUsersProfiles(HttpServletRequest req, @PathVariable String username) {
 
+                UUID curr = GetOptionalCurrentUsers.getViewerId(req);
                 return ResponseEntity.ok().body(
                                 SuccessResponse.<DetailProfileDTO>builder()
                                                 .message("successfully retrieving your profile data")
-                                                .data(service.getProfileDetails(username))
+                                                .data(service.getProfileDetails(username, curr))
                                                 .build());
         }
 
@@ -93,7 +97,7 @@ public class profilesController {
 
         @GetMapping("/search")
         public ResponseEntity<SuccessResponse<List<DetailProfileDTO>>> getSearchUsername(
-                        @RequestParam(required = false, name = "q") String param) {
+                        @RequestParam(required = false, name = "q", defaultValue = "") String param) {
                 return ResponseEntity.ok().body(SuccessResponse.<List<DetailProfileDTO>>builder()
                                 .message("here the search result")
                                 .data(service.searchByUsername(param))

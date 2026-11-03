@@ -67,6 +67,10 @@ public class Profiles {
     @Builder.Default
     private Integer followerCount = 0;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer followingCount = 0;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

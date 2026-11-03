@@ -7,6 +7,7 @@ import java.util.UUID;
 @Builder
 public record PostsPreviewNotificationDTO(
         UUID postId,
-        String thumbnail
+        String thumbnail,
+        String fileType
 ) {
 }

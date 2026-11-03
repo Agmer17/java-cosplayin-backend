@@ -1,9 +1,11 @@
 package cosplayin.app.profiles.service;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,12 @@ public class ProfilesService {
         private final ApplicationEventPublisher eventPublisher;
         private final ProfileJdbcQuery profileJdbcQuery;
 
+        @Value("${storage.s3.endpoint}")
+        private String s3StorageEndpoint;
+
+        @Value("${storage.s3.bucket.public}")
+        private String publicReadBucket;
+
         private final String[] avatarFolder = { "user", "profiles", "avatar" };
         private final String[] bannerFolder = { "user", "profiles", "banner" };
 
@@ -51,22 +59,18 @@ public class ProfilesService {
         }
 
         public DetailProfileDTO getProfileDetails(UUID id) {
-                DetailProfileDTO profileDetail = profileJdbcQuery.findProfileDetailsById(id)
-                                .orElseThrow(() -> new NotFoundException("profile and users was not found"));
 
-                return profileDetail;
+            return profileJdbcQuery.findProfileDetailsById(id)
+                            .orElseThrow(() -> new NotFoundException("profile and users was not found"));
         }
 
-        public DetailProfileDTO getProfileDetails(String username) {
-                DetailProfileDTO profileDetail = profileJdbcQuery.findProfileDetailsByUsername(username)
-                                .orElseThrow(() -> new NotFoundException("profile and users was not found"));
-
-                return profileDetail;
+        public DetailProfileDTO getProfileDetails(String username, UUID curr) {
+            return profileJdbcQuery.findProfileDetailsByUsername(username, curr)
+                            .orElseThrow(() -> new NotFoundException("profile and users was not found"));
         }
 
         @Transactional
         public DetailProfileDTO submitOnBoarding(UUID curr, SubmitOnBoardingRequests req) {
-
                 if (req.getBannerPicture() == null || req.getBannerPicture().isEmpty()
                                 || req.getProfilePicture() == null
                                 || req.getProfilePicture().isEmpty()) {
@@ -84,8 +88,8 @@ public class ProfilesService {
                 FileModel avatar = storageUtils.savePublicFile(req.getProfilePicture(), policy, avatarFolder);
                 FileModel banner = storageUtils.savePublicFile(req.getBannerPicture(), policy, bannerFolder);
 
-                profile.setAvatarUrl(avatar.getFilePath());
-                profile.setBannerUrl(banner.getFilePath());
+                profile.setAvatarUrl(this.storageUtils.signPublicFileUrl(avatar.getFilePath()));
+                profile.setBannerUrl(this.storageUtils.signPublicFileUrl(banner.getFilePath()));
                 userService.updateUsername(req.getUsername(), curr);
                 user.setStatus(UserStatus.ACTIVE);
 
@@ -130,11 +134,13 @@ public class ProfilesService {
 
                         String oldPathFile = profiles.getAvatarUrl();
 
-                        if (oldPathFile != null && !oldPathFile.startsWith("https://")) {
-                                storageUtils.deletePublicFile(oldPathFile);
+
+
+                        if (oldPathFile != null && !oldPathFile.contains("lh3.googleusercontent.com") && !oldPathFile.contains("cdn.discordapp.com")) {
+                                storageUtils.deletePublicFile(this.extractObjectKey(oldPathFile));
                         }
 
-                        profiles.setAvatarUrl(saved.getFilePath());
+                        profiles.setAvatarUrl(this.storageUtils.signPublicFileUrl(saved.getFilePath()));
                 }
 
                 if (updateDto.getBanner() != null) {
@@ -142,10 +148,10 @@ public class ProfilesService {
 
                         String oldPathFile = profiles.getBannerUrl();
 
-                        if (oldPathFile != null && !oldPathFile.startsWith("https://")) {
-                                storageUtils.deletePublicFile(oldPathFile);
+                        if (oldPathFile != null && !oldPathFile.contains("lh3.googleusercontent.com") && !oldPathFile.contains("cdn")) {
+                                storageUtils.deletePublicFile(this.extractObjectKey(oldPathFile));
                         }
-                        profiles.setBannerUrl(saved.getFilePath());
+                        profiles.setBannerUrl(this.storageUtils.signPublicFileUrl(saved.getFilePath()));
                 }
 
                 return DetailProfileDTO.builder()
@@ -162,15 +168,13 @@ public class ProfilesService {
         }
 
         public List<DetailProfileDTO> findRandomProfile(UUID curr) {
-                List<DetailProfileDTO> rand = profileJdbcQuery.findDiscoverProfiles(curr, 0, 10);
 
-                return rand;
+            return profileJdbcQuery.findDiscoverProfiles(curr, 0, 10);
         }
 
         public List<DetailProfileDTO> searchByUsername(String query) {
-                List<DetailProfileDTO> results = profileJdbcQuery.searchProfiles(query);
 
-                return results;
+            return profileJdbcQuery.searchProfiles(query);
         }
 
         public Profiles getProfile(UUID id) {
@@ -187,9 +191,25 @@ public class ProfilesService {
         public void increamnetFollower(UUID target) {
                 profileRepository.incrementProfilesFollowerCount(target);
         }
+        public void increamentFollowing(UUID target) {
+                profileRepository.incrementProfileFollowingCount(target);
+        }
 
         public void decreamentFollower(UUID target) {
                 profileRepository.decreamentProfilesFollowerCount(target);
         }
 
+        public void decreamentFollowing(UUID target) {
+                profileRepository.decreamentProfilesFollowingCount(target);
+        }
+
+        private String extractObjectKey(String url) {
+                String path = URI.create(url).getPath();
+
+                String bucketPrefix = "/development-public-bucket/";
+
+                return path.substring(path.indexOf(bucketPrefix) + bucketPrefix.length());
+        }
 }
+
+

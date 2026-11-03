@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
+import cosplayin.app.followers.model.type.FollowStatus;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,8 @@ public class DetailProfileMapper implements RowMapper<DetailProfileDTO> {
                 .userStatus(UserStatus.valueOf(rs.getString("status")))
                 .userRole(UserRoles.valueOf(rs.getString("role")))
                 .followerCount(rs.getInt("follower_count"))
+                .followingCount(rs.getInt("following_count"))
+                .followStatus(FollowStatus.valueOf(rs.getString("follow_status")))
                 .gender(Gender.valueOf(rs.getString("gender")))
                 .build();
     }

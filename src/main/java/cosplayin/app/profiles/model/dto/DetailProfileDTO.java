@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import cosplayin.app.core.authorization.UserRoles;
 import cosplayin.app.core.authorization.UserStatus;
+import cosplayin.app.followers.model.type.FollowStatus;
 import cosplayin.app.profiles.model.type.Gender;
 import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import lombok.Builder;
@@ -21,7 +22,9 @@ public record DetailProfileDTO(
         ProfilesVisibility visibility,
         Gender gender,
         String username,
+        FollowStatus followStatus,
         Integer followerCount,
+        Integer followingCount,
         UserStatus userStatus,
         UserRoles userRole) {
 }
