@@ -43,6 +43,33 @@ public class FollowerJdbcQuery {
                   AND vr.target_id    = u.id
             """;
 
+
+    private static final String BASE_FOLLOW_REQUEST_QUERY = """
+        SELECT
+            u.id              AS user_id,
+            p.display_name    AS display_name,
+            p.avatar_url      AS avatar_url,
+            p.visibility      AS visibility,
+            u.username        AS username,
+            u.role            AS user_role,
+            fr.created_at     AS created_at,
+            CASE
+                WHEN vf.id IS NOT NULL THEN 'FOLLOWING'
+                WHEN vr.id IS NOT NULL THEN 'REQUESTED'
+                ELSE 'NONE'
+            END               AS follow_status
+        FROM follow_requests fr
+        JOIN users u     ON u.id = fr.%s
+        JOIN profiles p  ON p.id = u.id
+        LEFT JOIN followers vf
+               ON vf.follower_id  = :viewerId
+              AND vf.following_id = u.id
+        LEFT JOIN follow_requests vr
+               ON vr.requester_id = :viewerId
+              AND vr.target_id    = u.id
+        """;
+
+
     public List<FollowerResponse> findFollowerFrom(UUID target, UUID viewerId) {
         String sql = BASE_FOLLOWER_QUERY.formatted("follower_id")
                 + " WHERE f.following_id = :targetId ORDER BY f.created_at DESC";
@@ -68,6 +95,17 @@ public class FollowerJdbcQuery {
         return jdbcTemplate.query(sql, params, mapper);
     }
 
+
+    public List<FollowerResponse> findIncomingFollowRequests(UUID userId) {
+        String sql = BASE_FOLLOW_REQUEST_QUERY.formatted("requester_id")
+                + " WHERE fr.target_id = :userId ORDER BY fr.created_at DESC";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("viewerId", userId);
+
+        return jdbcTemplate.query(sql, params, mapper);
+    }
 
 
 }

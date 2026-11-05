@@ -54,12 +54,16 @@ public class CosplayEventJdbcQuery {
     }
 
     public List<CosplayEventResponseDTO> findByBoundingBox(
-            double minLon, double minLat, double maxLon, double maxLat, String title) {
-
+            double minLon,
+            double minLat,
+            double maxLon,
+            double maxLat,
+            String search
+    ) {
         StringBuilder sql = new StringBuilder(EVENTS_PROJECTION).append("""
-            WHERE l.location && ST_MakeEnvelope(:minLon, :minLat, :maxLon, :maxLat, 4326)
-              AND e.end_at >= :now
-            """);
+        WHERE l.location && ST_MakeEnvelope(:minLon, :minLat, :maxLon, :maxLat, 4326)
+          AND e.end_at >= :now
+        """);
 
         Map<String, Object> params = new HashMap<>();
         params.put("minLon", minLon);
@@ -68,9 +72,16 @@ public class CosplayEventJdbcQuery {
         params.put("maxLat", maxLat);
         params.put("now", LocalDateTime.now());
 
-        if (title != null && !title.isBlank()) {
-            sql.append(" AND e.title ILIKE :title\n");
-            params.put("title", "%" + escapeLike(title.trim()) + "%");
+        if (search != null && !search.isBlank()) {
+            sql.append("""
+        AND (
+            e.title ILIKE :search
+            OR l.name ILIKE :search
+            OR l.address ILIKE :search
+        )
+        """);
+
+            params.put("search", "%" + escapeLike(search.trim()) + "%");
         }
 
         sql.append(" ORDER BY e.start_at");

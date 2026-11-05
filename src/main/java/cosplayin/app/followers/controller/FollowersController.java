@@ -15,6 +15,7 @@ import cosplayin.app.utils.GetOptionalCurrentUsers;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,12 +27,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users/{targetId}")
+@RequestMapping("/api")
 public class FollowersController {
 
         private final FollowerService service;
 
-        @PostMapping("/follow")
+        @PostMapping("/users/{targetId}/follow")
         @RequireAuth
         @RequireUserStatus({ UserStatus.ACTIVE })
         public ResponseEntity<SuccessResponse<FollowerResponse>> handlePostsFollow(
@@ -44,7 +45,7 @@ public class FollowersController {
                         new SuccessResponse<>("successfully following this users", resp));
         }
 
-        @DeleteMapping("/follow")
+        @DeleteMapping("/users/{targetId}/follow")
         @RequireAuth
         @RequireUserStatus({ UserStatus.ACTIVE })
         public ResponseEntity<SuccessResponse<Object>> handleUnfollow(
@@ -57,7 +58,7 @@ public class FollowersController {
                         new SuccessResponse<>("successfully unfollowing this users", null));
         }
 
-        @DeleteMapping("/follow-requests")
+        @DeleteMapping("/users/{targetId}/follow-requests")
         @RequireAuth
         @RequireUserStatus({ UserStatus.ACTIVE })
         public ResponseEntity<SuccessResponse<Object>> handleDeleteFollowRequests(
@@ -69,7 +70,19 @@ public class FollowersController {
                         new SuccessResponse<>("successfully cancel the follow requests", null));
         }
 
-        @GetMapping("/follow")
+        @PostMapping("/users/{targetId}/follow-requests")
+        @RequireAuth
+        @RequireUserStatus({ UserStatus.ACTIVE })
+        public ResponseEntity<SuccessResponse<Object>> handleAcceptFollowRequests(
+                        @CurrentUser UserCredentials curr,
+                        @PathVariable UUID targetId) {
+
+                LocalDateTime acceptedAt = service.acceptFollowRequests(curr.getId(), targetId);
+                return ResponseEntity.ok().body(
+                        new SuccessResponse<>("successfully cancel the follow requests", acceptedAt));
+        }
+
+        @GetMapping("/users/{targetId}/follow")
         public ResponseEntity<SuccessResponse<List<FollowerResponse>>> getFollowerFromusers(
                         @PathVariable UUID targetId,
                         HttpServletRequest request) {
@@ -79,12 +92,24 @@ public class FollowersController {
         }
 
 
-        @GetMapping("/following")
+        @GetMapping("/users/{targetId}/following")
         public ResponseEntity<SuccessResponse<List<FollowerResponse>>> getFollowingFrom(
                 @PathVariable UUID targetId,
                 HttpServletRequest request) {
                 return ResponseEntity.ok().body(
                         new SuccessResponse<>("successfully getting data", service.getFollowingFromUsers(
                                 targetId, GetOptionalCurrentUsers.getViewerId(request))));
+        }
+
+
+        @GetMapping("/profiles/me/following-requests")
+        @RequireAuth
+        public ResponseEntity<SuccessResponse<List<FollowerResponse>>> handleGetFollowingRequests(
+                @CurrentUser UserCredentials curr
+        ) {
+                return ResponseEntity.ok().body(
+                        new SuccessResponse<>("successfully getting the followers data",
+                                service.getRequestedFollow(curr.getId()))
+                );
         }
 }

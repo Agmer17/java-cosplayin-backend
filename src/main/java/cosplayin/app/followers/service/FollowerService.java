@@ -1,5 +1,6 @@
 package cosplayin.app.followers.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -106,7 +107,7 @@ public class FollowerService {
                 .orElseThrow(() -> new NotFoundException("you're not following this person!"));
         followerRepo.delete(follow);
         profilesService.decreamentFollower(target);
-        profilesService.decreamentFollowing(target);
+        profilesService.decreamentFollowing(curr);
         
     }
 
@@ -115,6 +116,22 @@ public class FollowerService {
         FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(curr, target)
                 .orElseThrow(() -> new NotFoundException("you doens't follow this person"));
         followRequestsRepo.delete(req);
+    }
+
+    @Transactional
+    public LocalDateTime acceptFollowRequests(UUID curr, UUID target) {
+        FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(curr, target)
+                .orElseThrow(() -> new NotFoundException("you doens't follow this person"));
+
+        this.createFollow(curr, target);
+        followRequestsRepo.delete(req);
+
+        return LocalDateTime.now();
+    }
+
+    public List<FollowerResponse> getRequestedFollow(UUID curr) {
+        return followerQuery.findIncomingFollowRequests(curr);
+
     }
 
     public List<FollowerResponse> getFollowerFromUsers(UUID target, UUID curr) {
