@@ -60,6 +60,7 @@ public class NotificationJdbcQuery {
 
     private static final String SQL_LIST_RECIPIENT = BASE_SELECT + """
             WHERE n.recipient_id = :recipientId
+            ORDER BY n.created_at DESC
             """;
 
     private static final String SQL_BY_ID = BASE_SELECT + """

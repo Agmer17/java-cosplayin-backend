@@ -192,7 +192,7 @@ public class PostsService {
         public List<PostsResponse> getPostsFromUsers(String username, int page, UUID curr) {
                 Profiles profile = profilesService.getProfile(username);
 
-                if (profile.getVisibility().equals(ProfilesVisibility.PRIVATE)) {
+                if (profile.getVisibility().equals(ProfilesVisibility.PRIVATE) && !profile.getUser().getId().equals(curr)) {
                         if (followerService.isNotFollowedBy(curr, profile.getId())) {
                                 throw new ForbiddenAccessExceptions("this posts is private");
                         }

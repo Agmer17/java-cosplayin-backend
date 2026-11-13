@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import cosplayin.app.notification.event.FollowNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,8 @@ public class FollowerService {
     private final ProfilesService profilesService;
 
     private final FollowerJdbcQuery followerQuery;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public FollowerResponse createFollow(UUID curr, UUID target) {
@@ -64,7 +68,6 @@ public class FollowerService {
             } catch (DataIntegrityViolationException e) {
                 throw new ResourceConflictExceptions("you've already requested to follow this person!");
             }
-
             return FollowerResponse.builder()
                     .user(SimpleProfileDTO.builder()
                             .id(targetProfile.id())
@@ -87,6 +90,7 @@ public class FollowerService {
                 throw new ResourceConflictExceptions("you've already follow this person");
             }
 
+            eventPublisher.publishEvent(new FollowNotificationEvent(curr, target));
             return FollowerResponse.builder()
                     .user(SimpleProfileDTO.builder()
                             .id(targetProfile.id())
