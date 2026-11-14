@@ -19,8 +19,8 @@ public class ConversationJdbcQuery {
 
     private static final String BASE_SELECT = """
             SELECT c.id,
-                   c.name,
-                   c.conversation_pic,
+                   COALESCE(other.username, c.name)               AS name,
+                   COALESCE(other.avatar_url, c.conversation_pic) AS conversation_pic,
                    c.conv_key,
                    c.created_at,
                    c.conversation_type,
@@ -82,16 +82,26 @@ public class ConversationJdbcQuery {
                 ORDER BY m.created_at DESC
                 LIMIT 1
             ) lm ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT ou.username, op2.avatar_url
+                FROM conversation_participants ocp
+                JOIN users ou ON ou.id = ocp.user_id
+                JOIN profiles op2 ON op2.id = ou.id
+                WHERE ocp.conversation_id = c.id
+                  AND ocp.user_id <> :viewerId
+                LIMIT 1
+            ) other ON UPPER(c.conversation_type::text) = 'PRIVATE'
             """;
 
-    public Optional<ConversationResponseDTO> findByConvKey(String convKey) {
+    public Optional<ConversationResponseDTO> findByConvKey(String convKey, UUID viewerId) {
         var sql = BASE_SELECT + """
                 WHERE c.conv_key = :convKey
                 LIMIT 1
                 """;
 
         var params = new MapSqlParameterSource()
-                .addValue("convKey", convKey);
+                .addValue("convKey", convKey)
+                .addValue("viewerId", viewerId);
 
         return jdbcTemplate.query(sql, params, mapper)
                 .stream()
@@ -110,7 +120,8 @@ public class ConversationJdbcQuery {
                 """;
 
         var params = new MapSqlParameterSource()
-                .addValue("userId", userId);
+                .addValue("userId", userId)
+                .addValue("viewerId", userId);
 
         return jdbcTemplate.query(sql, params, mapper);
     }

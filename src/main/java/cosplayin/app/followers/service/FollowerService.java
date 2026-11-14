@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import cosplayin.app.notification.event.FollowNotificationEvent;
+import cosplayin.app.notification.event.FollowRequestNotificationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -63,11 +64,14 @@ public class FollowerService {
             try {
                 followRequestsRepo.saveAndFlush(FollowRequests.builder()
                         .target(targetUsers)
+                        .requester(Users.builder().id(curr).build())
                         .build());
 
             } catch (DataIntegrityViolationException e) {
                 throw new ResourceConflictExceptions("you've already requested to follow this person!");
             }
+
+            eventPublisher.publishEvent(new FollowRequestNotificationEvent(curr, target, FollowStatus.REQUESTED));
             return FollowerResponse.builder()
                     .user(SimpleProfileDTO.builder()
                             .id(targetProfile.id())
@@ -117,7 +121,7 @@ public class FollowerService {
 
     @Transactional
     public void deleteFollowRequests(UUID curr, UUID target) {
-        FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(curr, target)
+        FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(target, curr)
                 .orElseThrow(() -> new NotFoundException("you doens't follow this person"));
         followRequestsRepo.delete(req);
     }

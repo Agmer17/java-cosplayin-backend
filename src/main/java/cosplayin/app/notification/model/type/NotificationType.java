@@ -8,7 +8,8 @@ public enum NotificationType {
     COMMENT_LIKE(true,  TargetKind.COMMENT),
     POST_COMMENT(false, TargetKind.COMMENT),
     COMMENT_REPLY(false, TargetKind.COMMENT),
-    FOLLOW(false, TargetKind.NONE);
+    FOLLOW(false, TargetKind.NONE),
+    FOLLOW_REQUEST(false, TargetKind.NONE);
 
     public enum TargetKind { NONE, POST, COMMENT }
 

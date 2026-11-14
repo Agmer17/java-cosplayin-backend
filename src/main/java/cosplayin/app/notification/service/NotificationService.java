@@ -216,6 +216,33 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
         }
     }
 
+    public void createNotification(FollowRequestNotificationEvent event) {
+
+        System.out.println("INI KEPANGGIL GAK MAS BUAT EVENT NYA!");
+        String groupKey = this.NotificationGroupKeyOf(NotificationType.FOLLOW_REQUEST, event.target());
+        Optional<Notifications> existed = notificationRepository.findByGroupKey(groupKey);
+
+        Users actor = Users.builder().id(event.curr()).build();
+        Users recipient = Users.builder().id(event.target()).build();
+
+        if (existed.isEmpty()) {
+            Notifications newNotif = Notifications .builder()
+                    .groupKey(groupKey)
+                    .recipient(recipient)
+                    .actorCount(1)
+                    .notificationType(NotificationType.FOLLOW_REQUEST)
+                    .build();
+
+            saveNotification(actor, recipient, newNotif);
+
+        } else {
+            saveActorToNotification(existed, actor, recipient);
+
+        }
+
+
+    }
+
 
     public List<NotificationResponse> getNotificationFromUsers(UUID userId) {
             return notificationJdbcQuery.findByRecipient(userId);

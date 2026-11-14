@@ -47,4 +47,12 @@ public class NotificationEventListener {
         service.createNotification(event);
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void onFollowRequests(FollowRequestNotificationEvent event) {
+        System.out.println("LISTENER MASUK: " + event);
+        service.createNotification(event);
+
+    }
+
 }
