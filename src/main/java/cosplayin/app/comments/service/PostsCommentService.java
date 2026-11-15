@@ -1,14 +1,5 @@
 package cosplayin.app.comments.service;
 
-import java.util.List;
-import java.util.UUID;
-
-import cosplayin.app.followers.service.FollowerService;
-import cosplayin.app.notification.event.PostsCommentNotificationEvent;
-import cosplayin.app.notification.event.PostsCommentRepliesNotificationEvent;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-
 import cosplayin.app.comments.model.dto.CommentResponse;
 import cosplayin.app.comments.model.dto.CreateCommentDto;
 import cosplayin.app.comments.model.entity.PostsComment;
@@ -18,6 +9,9 @@ import cosplayin.app.comments.repository.PostsCommentRepository;
 import cosplayin.app.core.authorization.UserRoles;
 import cosplayin.app.core.exception.model.ForbiddenAccessExceptions;
 import cosplayin.app.core.exception.model.NotFoundException;
+import cosplayin.app.followers.service.FollowerService;
+import cosplayin.app.notification.event.PostsCommentNotificationEvent;
+import cosplayin.app.notification.event.PostsCommentRepliesNotificationEvent;
 import cosplayin.app.posts.model.dto.PostsResponse;
 import cosplayin.app.posts.model.entity.Posts;
 import cosplayin.app.posts.model.type.PostsCommentStatus;
@@ -27,6 +21,11 @@ import cosplayin.app.security.context.UserCredentials;
 import cosplayin.app.user.model.entity.Users;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +39,6 @@ public class PostsCommentService {
     private final ApplicationEventPublisher eventPublisher;
 
 
-
     @Transactional
     public CommentResponse createComment(CreateCommentDto dto, UUID currentUser, UUID postId) {
 
@@ -48,7 +46,7 @@ public class PostsCommentService {
 
         boolean isReply = false;
 
-        if (posts.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
+        if (posts.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE) && !posts.getAuthor().id().equals(currentUser)) {
             if (followerService.isNotFollowedBy(currentUser, posts.getAuthor().id())) {
                 throw new ForbiddenAccessExceptions("you cant comment on this posts");
             }
@@ -142,9 +140,8 @@ public class PostsCommentService {
         commentRepository.deleteById(commentId);
 
         if (comment.getParentComment() != null) {
-           commentRepository.decrementParentReplyCount(comment.getParentComment());
+            commentRepository.decrementParentReplyCount(comment.getParentComment());
         }
-
 
 
         postsService.decreamentCommentCount(comment.getPostsId(), commentRepository.countTheReplies(comment.getCommentId()) + 1);

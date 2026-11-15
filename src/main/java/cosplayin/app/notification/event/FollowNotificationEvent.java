@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record FollowNotificationEvent(
         UUID actorId,
-        UUID recipient
+        UUID recipient,
+        UUID followid
 ) {
 }

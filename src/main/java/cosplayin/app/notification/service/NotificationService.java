@@ -51,7 +51,7 @@ public class NotificationService {
         response.ifPresent(notificationResponse -> messagingTemplate.convertAndSendToUser(recipient.getId().toString(), "/personal/notifications", notificationResponse));
     }
 
-private void saveActorToNotification(Optional<Notifications> existed, Users actor, Users recipient) {
+    private void saveActorToNotification(Optional<Notifications> existed, Users actor, Users recipient) {
 
         if (existed.isEmpty()) return;
 
@@ -82,7 +82,7 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
 
         if (existed.isEmpty()) {
 
-            Notifications newNotif = Notifications  .builder()
+            Notifications newNotif = Notifications.builder()
                     .groupKey(groupKey)
                     .recipient(recipient)
                     .actorCount(1)
@@ -101,7 +101,6 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
         }
 
 
-
     }
 
     @Transactional
@@ -117,8 +116,7 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
             Posts posts = Posts.builder().id(event.postsId()).build();
 
 
-
-            Notifications newNotif = Notifications .builder()
+            Notifications newNotif = Notifications.builder()
                     .groupKey(groupKey)
                     .recipient(recipient)
                     .actorCount(1)
@@ -149,7 +147,7 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
 
         if (existed.isEmpty()) {
             PostsComment comment = PostsComment.builder().id(event.commentId()).build();
-            Notifications newNotif = Notifications .builder()
+            Notifications newNotif = Notifications.builder()
                     .groupKey(groupKey)
                     .recipient(recipient)
                     .actorCount(1)
@@ -165,7 +163,7 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
         }
     }
 
-    public void createNotification(PostsCommentRepliesNotificationEvent event){
+    public void createNotification(PostsCommentRepliesNotificationEvent event) {
         String groupKey = this.NotificationGroupKeyOf(NotificationType.COMMENT_REPLY, event.commentId());
 
         Optional<Notifications> existed = notificationRepository.findByGroupKey(groupKey);
@@ -175,7 +173,7 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
 
         if (existed.isEmpty()) {
             PostsComment comment = PostsComment.builder().id(event.commentId()).build();
-            Notifications newNotif = Notifications .builder()
+            Notifications newNotif = Notifications.builder()
                     .groupKey(groupKey)
                     .recipient(recipient)
                     .actorCount(1)
@@ -194,59 +192,42 @@ private void saveActorToNotification(Optional<Notifications> existed, Users acto
 
     public void createNotification(FollowNotificationEvent event) {
         String groupKey = this.NotificationGroupKeyOf(NotificationType.FOLLOW, event.recipient());
-
-        Optional<Notifications> existed = notificationRepository.findByGroupKey(groupKey);
-
         Users actor = Users.builder().id(event.actorId()).build();
         Users recipient = Users.builder().id(event.recipient()).build();
+        Notifications newNotif = Notifications.builder()
+                .groupKey(groupKey)
+                .recipient(recipient)
+                .actorCount(1)
+                .notificationType(NotificationType.FOLLOW)
+                .build();
 
-        if (existed.isEmpty()) {
-            Notifications newNotif = Notifications .builder()
-                    .groupKey(groupKey)
-                    .recipient(recipient)
-                    .actorCount(1)
-                    .notificationType(NotificationType.FOLLOW)
-                    .build();
-
-            saveNotification(actor, recipient, newNotif);
-
-        } else {
-            saveActorToNotification(existed, actor, recipient);
-
-        }
+        saveNotification(actor, recipient, newNotif);
     }
 
     public void createNotification(FollowRequestNotificationEvent event) {
-
-        System.out.println("INI KEPANGGIL GAK MAS BUAT EVENT NYA!");
-        String groupKey = this.NotificationGroupKeyOf(NotificationType.FOLLOW_REQUEST, event.target());
-        Optional<Notifications> existed = notificationRepository.findByGroupKey(groupKey);
+        String groupKey = this.NotificationGroupKeyOf(NotificationType.FOLLOW_REQUEST, event.requestId());
 
         Users actor = Users.builder().id(event.curr()).build();
         Users recipient = Users.builder().id(event.target()).build();
+        Notifications newNotif = Notifications.builder()
+                .groupKey(groupKey)
+                .recipient(recipient)
+                .actorCount(1)
+                .notificationType(NotificationType.FOLLOW_REQUEST)
+                .build();
 
-        if (existed.isEmpty()) {
-            Notifications newNotif = Notifications .builder()
-                    .groupKey(groupKey)
-                    .recipient(recipient)
-                    .actorCount(1)
-                    .notificationType(NotificationType.FOLLOW_REQUEST)
-                    .build();
+        saveNotification(actor, recipient, newNotif);
+    }
 
-            saveNotification(actor, recipient, newNotif);
-
-        } else {
-            saveActorToNotification(existed, actor, recipient);
-
-        }
-
-
+    public void removeNotification(RemoveFollowRequestNotification event) {
+        String groupKey = this.NotificationGroupKeyOf(NotificationType.FOLLOW_REQUEST, event.requestId());
+        Optional<Notifications> notif = notificationRepository.findByGroupKey(groupKey);
+        notif.ifPresent(notificationRepository::delete);
     }
 
 
     public List<NotificationResponse> getNotificationFromUsers(UUID userId) {
-            return notificationJdbcQuery.findByRecipient(userId);
-
+        return notificationJdbcQuery.findByRecipient(userId);
     }
 
 

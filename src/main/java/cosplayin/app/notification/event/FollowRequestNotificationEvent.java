@@ -7,6 +7,6 @@ import java.util.UUID;
 public record FollowRequestNotificationEvent(
         UUID curr,
         UUID target,
-        FollowStatus status
+        UUID requestId
 ) {
 }

@@ -1,16 +1,5 @@
 package cosplayin.app.followers.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import cosplayin.app.notification.event.FollowNotificationEvent;
-import cosplayin.app.notification.event.FollowRequestNotificationEvent;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.followers.model.dto.FollowerResponse;
@@ -20,12 +9,23 @@ import cosplayin.app.followers.model.type.FollowStatus;
 import cosplayin.app.followers.repository.FollowRequestsRepository;
 import cosplayin.app.followers.repository.FollowerJdbcQuery;
 import cosplayin.app.followers.repository.FollowerRepository;
+import cosplayin.app.notification.event.FollowNotificationEvent;
+import cosplayin.app.notification.event.FollowRequestNotificationEvent;
+import cosplayin.app.notification.event.RemoveFollowRequestNotification;
 import cosplayin.app.profiles.model.dto.DetailProfileDTO;
 import cosplayin.app.profiles.model.dto.SimpleProfileDTO;
 import cosplayin.app.profiles.model.type.ProfilesVisibility;
 import cosplayin.app.profiles.service.ProfilesService;
 import cosplayin.app.user.model.entity.Users;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -62,16 +62,17 @@ public class FollowerService {
         if (targetProfile.visibility().equals(ProfilesVisibility.PRIVATE)) {
 
             try {
-                followRequestsRepo.saveAndFlush(FollowRequests.builder()
+                FollowRequests savedRequst = followRequestsRepo.saveAndFlush(FollowRequests.builder()
                         .target(targetUsers)
                         .requester(Users.builder().id(curr).build())
                         .build());
+
+                eventPublisher.publishEvent(new FollowRequestNotificationEvent(curr, target, savedRequst.getId()));
 
             } catch (DataIntegrityViolationException e) {
                 throw new ResourceConflictExceptions("you've already requested to follow this person!");
             }
 
-            eventPublisher.publishEvent(new FollowRequestNotificationEvent(curr, target, FollowStatus.REQUESTED));
             return FollowerResponse.builder()
                     .user(SimpleProfileDTO.builder()
                             .id(targetProfile.id())
@@ -86,15 +87,15 @@ public class FollowerService {
 
         } else {
             try {
-                followerRepo.saveAndFlush(follow);
+                Followers savedFollow = followerRepo.saveAndFlush(follow);
                 profilesService.increamnetFollower(target);
                 profilesService.increamentFollowing(curr);
 
+                eventPublisher.publishEvent(new FollowNotificationEvent(curr, target, savedFollow.getId()));
             } catch (DataIntegrityViolationException e) {
                 throw new ResourceConflictExceptions("you've already follow this person");
             }
 
-            eventPublisher.publishEvent(new FollowNotificationEvent(curr, target));
             return FollowerResponse.builder()
                     .user(SimpleProfileDTO.builder()
                             .id(targetProfile.id())
@@ -110,30 +111,43 @@ public class FollowerService {
     }
 
     @Transactional
+    public void createFollowers(UUID req, UUID target) {
+        Followers follower = Followers.builder()
+                .follower(Users.builder().id(req).build())
+                .following(Users.builder().id(target).build())
+                .build();
+
+        profilesService.increamnetFollower(target);
+        profilesService.increamentFollowing(req);
+        followerRepo.save(follower);
+    }
+
+    @Transactional
     public void deleteFollow(UUID curr, UUID target) {
         Followers follow = followerRepo.findByFollower_IdAndFollowing_Id(curr, target)
                 .orElseThrow(() -> new NotFoundException("you're not following this person!"));
         followerRepo.delete(follow);
         profilesService.decreamentFollower(target);
         profilesService.decreamentFollowing(curr);
-        
+
     }
 
     @Transactional
     public void deleteFollowRequests(UUID curr, UUID target) {
         FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(target, curr)
                 .orElseThrow(() -> new NotFoundException("you doens't follow this person"));
+        eventPublisher.publishEvent(new RemoveFollowRequestNotification(req.getId()));
         followRequestsRepo.delete(req);
     }
 
     @Transactional
     public LocalDateTime acceptFollowRequests(UUID curr, UUID target) {
-        FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(curr, target)
+        FollowRequests req = followRequestsRepo.findByRequester_IdAndTarget_Id(target, curr)
                 .orElseThrow(() -> new NotFoundException("you doens't follow this person"));
 
-        this.createFollow(curr, target);
+        this.createFollowers(target, curr);
+        eventPublisher.publishEvent(new RemoveFollowRequestNotification(req.getId()));
         followRequestsRepo.delete(req);
-
         return LocalDateTime.now();
     }
 

@@ -22,13 +22,13 @@ public class NotificationEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
-    public void onPostsComment(PostsCommentNotificationEvent event){
+    public void onPostsComment(PostsCommentNotificationEvent event) {
         service.createNotification(event);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
-    public void onPostsCommentLike(PostCommentLikeNotificationEvent event){
+    public void onPostsCommentLike(PostCommentLikeNotificationEvent event) {
 
         service.createNotification(event);
     }
@@ -36,23 +36,27 @@ public class NotificationEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
-    public void onPostsCommentReplies(PostsCommentRepliesNotificationEvent event){
+    public void onPostsCommentReplies(PostsCommentRepliesNotificationEvent event) {
 
         service.createNotification(event);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
-    public void onFollow(FollowNotificationEvent event){
+    public void onFollow(FollowNotificationEvent event) {
         service.createNotification(event);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void onFollowRequests(FollowRequestNotificationEvent event) {
-        System.out.println("LISTENER MASUK: " + event);
         service.createNotification(event);
 
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void onRemoveEvent(RemoveFollowRequestNotification event) {
+        service.removeNotification(event);
+    }
 }

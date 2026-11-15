@@ -1,13 +1,5 @@
 package cosplayin.app.bookmark.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import cosplayin.app.bookmark.model.entity.PostsBookmark;
 import cosplayin.app.bookmark.repository.PostsBookmarkRepository;
 import cosplayin.app.core.exception.model.NotFoundException;
@@ -17,6 +9,13 @@ import cosplayin.app.posts.model.entity.Posts;
 import cosplayin.app.posts.service.PostsService;
 import cosplayin.app.user.model.entity.Users;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -49,8 +48,7 @@ public class BookmarkService {
 
     public List<PostsResponse> findBookmarkFromUsers(UUID id, UUID curr) {
         List<UUID> bookmarks = bookmarkRepository.getBookmarkFromUsers(id);
-        List<PostsResponse> responses = postsService.findPostsDetailsInIds(bookmarks, curr);
-        return responses;
+        return postsService.findPostsDetailsInIds(bookmarks, curr);
     }
 
     @Transactional
