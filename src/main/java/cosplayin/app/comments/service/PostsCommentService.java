@@ -105,7 +105,7 @@ public class PostsCommentService {
 
         PostsResponse resp = postsService.getPostsDetail(postsId, curr);
 
-        if (resp.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE)) {
+        if (resp.getAuthor().visibility().equals(ProfilesVisibility.PRIVATE) && !resp.getAuthor().id().equals(curr)) {
             if (followerService.isNotFollowedBy(curr, resp.getAuthor().id())) {
                 throw new ForbiddenAccessExceptions("you cant comment on this posts");
             }

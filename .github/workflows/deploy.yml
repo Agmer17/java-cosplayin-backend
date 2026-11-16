@@ -1,0 +1,54 @@
+name: Build & Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build jar
+        run: ./mvnw -B -DskipTests clean package
+
+      - name: Prepare jar
+        run: cp target/*.jar app.jar
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload jar
+        run: |
+          scp -i ~/.ssh/deploy_key app.jar \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/cosplay-app/app.jar.new
+
+      - name: Swap jar & restart
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} '
+            mv /cosplay-app/app.jar.new /cosplay-app/app.jar &&
+            sudo systemctl restart cosplay-backend &&
+            sleep 20 &&
+            sudo systemctl is-active cosplay-backend
+          '

@@ -10,7 +10,7 @@ spring:
       enabled: always
   config:
     import:
-    - optional:file:.env[.properties]
+      - optional:file:.env[.properties]
   
   threads:
     virtual:
@@ -25,7 +25,6 @@ spring:
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  
     hikari:
       pool-name: CosplayIncHikariPool
       maximum-pool-size: 15
@@ -41,7 +40,7 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false
-    
+
 
   mail:
     host: stmp.gmail.com
@@ -74,7 +73,7 @@ storage:
     endpoint: https://nos.wjv-1.neo.id
     region: idn
     bucket:
-      private : development-media-bucket
-      public : development-public-bucket
+      private: development-media-bucket
+      public: development-public-bucket
     access-key: ${S3_ACCESS_KEY}
     secret-key: ${S3_SECRET_KEY}

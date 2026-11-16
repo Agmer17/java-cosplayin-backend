@@ -34,21 +34,17 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class MessageService {
 
+    private static final long MAX_FILE_SIZE = 15 * 1024 * 1024;
     private final MessageRepository messageRepo;
     private final MessageAttachmentRepository attachmentRepo;
     private final ConversationService conversationService;
     private final MessageJdbcQuery messageJdbcQuery;
-
     private final ApplicationEventPublisher eventPublisher;
     private final StorageUtils storage;
     private final SignerUrlUtils signer;
-    private static final long MAX_FILE_SIZE = 15 * 1024 * 1024;
-
+    private final EntityManager entityManager;
     @Value("${storage.s3.bucket.private}")
     private String privateBucket;
-
-    private final EntityManager entityManager;
-
 
     @Transactional(rollbackFor = Exception.class)
     public MessageResponseDTO createPrivateMessage(UUID target, UUID curr, CreateMessageDTO dto) {
@@ -67,12 +63,12 @@ public class MessageService {
 
         Users currUsers = Users.builder().id(curr).build();
         Message message = Message.builder().conversation(conv).sender(currUsers)
-                    .textContent(dto.getTextContent())
-                    .build();
+                .textContent(dto.getTextContent())
+                .build();
 
         if (dto.getReplyTo() != null) {
-           Message reply = messageRepo.findById(dto.getReplyTo()).orElseThrow(()-> new NotFoundException("replied message not found!"));
-           message.setReplyTo(reply);
+            Message reply = messageRepo.findById(dto.getReplyTo()).orElseThrow(() -> new NotFoundException("replied message not found!"));
+            message.setReplyTo(reply);
         }
 
         messageRepo.save(message);
@@ -119,7 +115,16 @@ public class MessageService {
             return new ArrayList<>();
         }
 
-        return messageJdbcQuery.findByConversation(conv.get().getId());
+        List<MessageResponseDTO> dto = messageJdbcQuery.findByConversation(conv.get().getId());
+
+
+        dto.forEach(rsp -> {
+            if (rsp.getMedia() != null) {
+                rsp.getMedia().forEach(md -> md.setMediaUrl(signer.sign(privateBucket, md.getMediaUrl(), Duration.ofHours(1))));
+            }
+        });
+
+        return dto;
 
     }
 }
