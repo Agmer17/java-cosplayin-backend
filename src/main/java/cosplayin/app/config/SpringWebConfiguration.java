@@ -1,7 +1,8 @@
 package cosplayin.app.config;
 
-import java.util.List;
-
+import cosplayin.app.auth.filter.AuthHydrationFilter;
+import cosplayin.app.security.resolver.UserCredentilasResolver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -10,9 +11,8 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import cosplayin.app.auth.filter.AuthHydrationFilter;
-import cosplayin.app.security.resolver.UserCredentilasResolver;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -47,13 +47,17 @@ public class SpringWebConfiguration implements WebMvcConfigurer {
                 .addResourceLocations("file:uploads/public/");
     }
 
-   @Override
+    @Override
     public void addCorsMappings(CorsRegistry registry) {
-    registry.addMapping("/**")
-            .allowedOriginPatterns(this.frontendHosts)
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-            .allowedHeaders("*")
-            .allowCredentials(true)
-            .maxAge(3600);
-}
+        registry.addMapping("/**")
+                .allowedOriginPatterns(
+                        Arrays.stream(frontendHosts.split(","))
+                                .map(String::trim)
+                                .toArray(String[]::new)
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
 }

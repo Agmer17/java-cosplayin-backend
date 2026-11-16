@@ -61,7 +61,7 @@ GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
 GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 frontend:
   host:
-    url: "https://cosplayin.me"
+    url: "https://cosplayin.me,https://www.cosplayin.me"
 
 app:
   domain: "cosplayin.me"
