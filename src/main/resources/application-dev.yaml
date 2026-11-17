@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile:
+        - dev
+  data:
+    redis:
+      host: ${LOCAL_REDIS_HOSTS}
+      port: ${REDIS_PORT}
+server:
+  address: 0.0.0.0
+  port: 80
+
+GOOGLE_CLIENT_ID: ${LOCAL_GOOGLE_CLIENT}
+GOOGLE_CLIENT_SECRET: ${LOCAL_CLIENT_SECRET}
+DISCORD_CLIENT_ID: ${LOCAL_DISCORD_CLIENT}
+DISCORD_CLIENT_SECRET: ${LOCAL_DISCROD_SECRET}
+
+frontend:
+  host:
+    url: "http://localhost:3000"
+
+app:
+  domain: "localhost"
+
+backend:
+  host: "http://localhost"

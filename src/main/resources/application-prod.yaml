@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile:
+        - prod
+  data:
+    redis:
+      host: ${REDIS_HOSTS}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSSWORD}
+server:
+  address: 127.0.0.1
+  port: 8080
+
+GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+
+frontend:
+  host:
+    url: "https://www.cosplayin.me"
+
+app:
+  domain: "cosplayin.me"
+
+backend:
+  host: "https://api.cosplayin.me"

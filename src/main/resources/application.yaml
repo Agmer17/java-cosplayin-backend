@@ -29,20 +29,11 @@ spring:
       pool-name: CosplayIncHikariPool
       maximum-pool-size: 15
       minimum-idle: 2
-  
-  data:
-    redis:
-      host: ${REDIS_HOSTS}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSSWORD}
-
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     open-in-view: false
-
-
   mail:
     host: stmp.gmail.com
     port: 587
@@ -54,21 +45,6 @@ spring:
           auth: true
           starttls:
             enable: true
-server:
-  address: 127.0.0.1
-  port: 8080
-GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-frontend:
-  host:
-    url: "https://www.cosplayin.me"
-
-app:
-  domain: "cosplayin.me"
-
-backend:
-  host: "https://api.cosplayin.me"
-
 storage:
   s3:
     endpoint: https://nos.wjv-1.neo.id
