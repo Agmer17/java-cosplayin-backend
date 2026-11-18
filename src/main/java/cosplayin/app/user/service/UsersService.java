@@ -1,20 +1,22 @@
 package cosplayin.app.user.service;
 
-import java.util.UUID;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-
 import cosplayin.app.core.authorization.UserRoles;
 import cosplayin.app.core.authorization.UserStatus;
 import cosplayin.app.core.event.UsersDeletedEvent;
 import cosplayin.app.core.exception.model.NotFoundException;
-import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.core.exception.model.RequestValidationException;
+import cosplayin.app.core.exception.model.ResourceConflictExceptions;
 import cosplayin.app.user.model.entity.Users;
 import cosplayin.app.user.repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +73,23 @@ public class UsersService {
 
     public Users getUser(UUID id) {
         return userRepo.findById(id).orElse(null);
+    }
+
+
+    public void validateUsersExist(List<UUID> userIds) {
+        List<UUID> existingIds = userRepo.findAllById(userIds)
+                .stream()
+                .map(Users::getId)
+                .toList();
+
+        Set<UUID> missingIds = new HashSet<>(userIds);
+        existingIds.forEach(missingIds::remove);
+
+        if (!missingIds.isEmpty()) {
+            throw new NotFoundException(
+                    "Users not found with IDs: " + missingIds
+            );
+        }
     }
 
 }

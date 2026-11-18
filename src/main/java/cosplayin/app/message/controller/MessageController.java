@@ -30,7 +30,7 @@ public class MessageController {
             @PathVariable UUID userId,
             @CurrentUser UserCredentials cred,
             @ModelAttribute CreateMessageDTO dto
-            ) {
+    ) {
 
         return ResponseEntity.ok(new SuccessResponse<>("successfully creating a message",
                 service.createPrivateMessage(userId, cred.getId(), dto)));
@@ -44,8 +44,30 @@ public class MessageController {
             @CurrentUser UserCredentials cred
     ) {
         return ResponseEntity.ok(new SuccessResponse<>("successfully getting the data",
-                    service.getPrivateMessage(cred.getId(), userId)
-                ));
+                service.getPrivateMessage(cred.getId(), userId)
+        ));
     }
 
+
+    @PostMapping("/group/{groupId}")
+    @RequireUserStatus({UserStatus.ACTIVE})
+    public ResponseEntity<SuccessResponse<MessageResponseDTO>> handleCreateGroupMessaage(
+            @CurrentUser UserCredentials cred,
+            @ModelAttribute CreateMessageDTO dto,
+            @PathVariable UUID groupId
+    ) {
+        return ResponseEntity.ok(new SuccessResponse<>("successfully sending the group message",
+                service.createGroupMessage(groupId, cred.getId(), dto)
+        ));
+
+    }
+
+    @GetMapping("/group/{groupId}")
+    public ResponseEntity<SuccessResponse<List<MessageResponseDTO>>> handleGetGroupChatMessage(
+            @CurrentUser UserCredentials cred,
+            @PathVariable UUID groupId
+    ) {
+        return ResponseEntity.ok(new SuccessResponse<>("successfully getting the group chat message",
+                service.getGroupChatMessage(groupId, cred.getId())));
+    }
 }

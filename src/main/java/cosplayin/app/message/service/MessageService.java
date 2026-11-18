@@ -1,10 +1,14 @@
 package cosplayin.app.message.service;
 
+import cosplayin.app.conversation.model.dto.ConversationResponseDTO;
+import cosplayin.app.conversation.model.dto.ParticipantResponse;
 import cosplayin.app.conversation.model.entity.Conversation;
 import cosplayin.app.conversation.model.type.ConversationType;
 import cosplayin.app.conversation.service.ConversationService;
 import cosplayin.app.core.exception.model.NotFoundException;
 import cosplayin.app.core.exception.model.RequestValidationException;
+import cosplayin.app.message.event.GroupMessageCreatedEvent;
+import cosplayin.app.message.event.PrivateMessageCreatedEvent;
 import cosplayin.app.message.model.dto.CreateMessageDTO;
 import cosplayin.app.message.model.dto.MessageResponseDTO;
 import cosplayin.app.message.model.entity.Message;
@@ -30,11 +34,24 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.IntStream;
 
+
 @Service
 @RequiredArgsConstructor
 public class MessageService {
 
     private static final long MAX_FILE_SIZE = 15 * 1024 * 1024;
+    private static final Duration MEDIA_URL_EXPIRATION = Duration.ofHours(1);
+
+    private static final FileValidationPolicy MEDIA_POLICY =
+            new FileValidationPolicy(
+                    Set.of(
+                            SupportedFileType.IMAGE,
+                            SupportedFileType.VIDEO,
+                            SupportedFileType.DOCUMENT
+                    ),
+                    MAX_FILE_SIZE
+            );
+
     private final MessageRepository messageRepo;
     private final MessageAttachmentRepository attachmentRepo;
     private final ConversationService conversationService;
@@ -43,88 +60,191 @@ public class MessageService {
     private final StorageUtils storage;
     private final SignerUrlUtils signer;
     private final EntityManager entityManager;
+
     @Value("${storage.s3.bucket.private}")
     private String privateBucket;
 
     @Transactional(rollbackFor = Exception.class)
-    public MessageResponseDTO createPrivateMessage(UUID target, UUID curr, CreateMessageDTO dto) {
+    public MessageResponseDTO createPrivateMessage(
+            UUID target,
+            UUID curr,
+            CreateMessageDTO dto
+    ) {
+        validateMessageContent(dto);
 
-        if (dto.getMedia() == null && dto.getTextContent() == null) {
-            throw new RequestValidationException("the media and the text cannot be null at the same time");
-        }
-
-        Conversation conv = conversationService.getOrCreateConversation(
+        Conversation conversation = conversationService.getOrCreateConversation(
                 StringUtils.generateConvKey(curr, target),
                 ConversationType.PRIVATE,
                 curr,
                 target
         );
 
+        MessageResponseDTO response = saveMessage(conversation, curr, dto);
 
-        Users currUsers = Users.builder().id(curr).build();
-        Message message = Message.builder().conversation(conv).sender(currUsers)
+        eventPublisher.publishEvent(
+                new PrivateMessageCreatedEvent(curr, target, response)
+        );
+
+        return response;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public MessageResponseDTO createGroupMessage(
+            UUID groupId,
+            UUID curr,
+            CreateMessageDTO dto
+    ) {
+        validateMessageContent(dto);
+
+        String key = conversationService.generateGroupChatKey(groupId);
+
+        ConversationResponseDTO groupResponse =
+                conversationService.getConversationGroupByKey(key, curr);
+
+        conversationService.validateGroupMember(groupId, curr, groupResponse);
+
+        Conversation conversation = Conversation.builder()
+                .id(groupResponse.getId())
+                .build();
+
+        List<UUID> members = groupResponse.getParticipants()
+                .stream()
+                .map(ParticipantResponse::getId)
+                .toList();
+
+
+        MessageResponseDTO response = saveMessage(conversation, curr, dto);
+
+
+        eventPublisher.publishEvent(
+                new GroupMessageCreatedEvent(members, response)
+        );
+
+        return response;
+    }
+
+    public List<MessageResponseDTO> getPrivateMessage(
+            UUID curr,
+            UUID target
+    ) {
+        String key = StringUtils.generateConvKey(curr, target);
+
+        Optional<Conversation> conversation =
+                conversationService.getByConversationKey(key);
+
+        if (conversation.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<MessageResponseDTO> messages =
+                messageJdbcQuery.findByConversation(conversation.get().getId());
+
+        signMediaUrls(messages);
+
+        return messages;
+    }
+
+    public List<MessageResponseDTO> getGroupChatMessage(UUID groupId, UUID curr) {
+        ConversationResponseDTO groupResp = conversationService.getConversationGroupByKey(
+                conversationService.generateGroupChatKey(groupId), curr);
+
+        conversationService.validateGroupMember(groupId, curr, groupResp);
+
+        List<MessageResponseDTO> messages = messageJdbcQuery.findByConversation(groupResp.getId());
+        signMediaUrls(messages);
+        
+        return messages;
+    }
+
+    private MessageResponseDTO saveMessage(
+            Conversation conversation,
+            UUID senderId,
+            CreateMessageDTO dto
+    ) {
+        Message message = Message.builder()
+                .conversation(conversation)
+                .sender(Users.builder().id(senderId).build())
                 .textContent(dto.getTextContent())
                 .build();
 
         if (dto.getReplyTo() != null) {
-            Message reply = messageRepo.findById(dto.getReplyTo()).orElseThrow(() -> new NotFoundException("replied message not found!"));
+            Message reply = messageRepo.findById(dto.getReplyTo())
+                    .orElseThrow(() ->
+                            new NotFoundException("replied message not found!")
+                    );
+
             message.setReplyTo(reply);
         }
 
         messageRepo.save(message);
-        if (dto.getMedia() != null) {
 
-            FileValidationPolicy mediaPolicy = new FileValidationPolicy(
-                    Set.of(SupportedFileType.IMAGE, SupportedFileType.VIDEO, SupportedFileType.DOCUMENT),
-                    MAX_FILE_SIZE
-            );
-
-            List<FileModel> savedMedia = storage.savePrivateFile(dto.getMedia(), mediaPolicy, "chat", "media");
-
-
-            List<MessageAttachment> attachments = IntStream.range(0, savedMedia.size())
-                    .mapToObj(idx -> MessageAttachment.builder()
-                            .mediaUrl(savedMedia.get(idx).getFilePath())
-                            .mediaOrder(idx)
-                            .mediaType(savedMedia.get(idx).getFileType())
-                            .message(message)
-                            .build()).toList();
-
-            attachmentRepo.saveAll(attachments);
-        }
+        saveAttachments(message, dto);
 
         entityManager.flush();
 
-        MessageResponseDTO savedMessage = messageJdbcQuery.findById(message.getId()).orElseThrow(() -> new NotFoundException("message was not found"));
-        savedMessage.getMedia().forEach(md -> md.setMediaUrl(
-                signer.sign(privateBucket,
-                        md.getMediaUrl(),
-                        Duration.ofHours(1)
-                )));
+        MessageResponseDTO response = messageJdbcQuery.findById(message.getId())
+                .orElseThrow(() ->
+                        new NotFoundException("message was not found")
+                );
 
-        return savedMessage;
+        signMediaUrls(response);
+
+        return response;
     }
 
-
-    public List<MessageResponseDTO> getPrivateMessage(UUID curr, UUID target) {
-        String key = StringUtils.generateConvKey(curr, target);
-
-        Optional<Conversation> conv = conversationService.getByConversationKey(key);
-
-        if (conv.isEmpty()) {
-            return new ArrayList<>();
+    private void saveAttachments(
+            Message message,
+            CreateMessageDTO dto
+    ) {
+        if (dto.getMedia() == null) {
+            return;
         }
 
-        List<MessageResponseDTO> dto = messageJdbcQuery.findByConversation(conv.get().getId());
+        List<FileModel> savedMedia = storage.savePrivateFile(
+                dto.getMedia(),
+                MEDIA_POLICY,
+                "chat",
+                "media"
+        );
 
+        List<MessageAttachment> attachments = IntStream
+                .range(0, savedMedia.size())
+                .mapToObj(index -> {
+                    FileModel file = savedMedia.get(index);
 
-        dto.forEach(rsp -> {
-            if (rsp.getMedia() != null) {
-                rsp.getMedia().forEach(md -> md.setMediaUrl(signer.sign(privateBucket, md.getMediaUrl(), Duration.ofHours(1))));
-            }
-        });
+                    return MessageAttachment.builder()
+                            .mediaUrl(file.getFilePath())
+                            .mediaOrder(index)
+                            .mediaType(file.getFileType())
+                            .message(message)
+                            .build();
+                })
+                .toList();
 
-        return dto;
+        attachmentRepo.saveAll(attachments);
+    }
 
+    private void validateMessageContent(CreateMessageDTO dto) {
+        if (dto.getMedia() == null && dto.getTextContent() == null) {
+            throw new RequestValidationException(
+                    "the media and the text cannot be null at the same time"
+            );
+        }
+    }
+
+    private void signMediaUrls(MessageResponseDTO response) {
+        response.getMedia().forEach(media ->
+                media.setMediaUrl(
+                        signer.sign(
+                                privateBucket,
+                                media.getMediaUrl(),
+                                MEDIA_URL_EXPIRATION
+                        )
+                )
+        );
+    }
+
+    private void signMediaUrls(List<MessageResponseDTO> messages) {
+        messages.forEach(this::signMediaUrls);
     }
 }
